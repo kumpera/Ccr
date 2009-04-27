@@ -14,6 +14,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
+		src/MonoTODOAttribute.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
@@ -32,7 +33,7 @@ compile: Microsoft.Ccr.Core.dll Microsoft.Ccr.Core_test.dll
 	@echo done
 
 run-test: Microsoft.Ccr.Core_test.dll
-	 mono --debug bin/nunit-console.exe --noshadow Microsoft.Ccr.Core_test.dll
+	 mono --debug -O=-inline,-gshared bin/nunit-console.exe --noshadow Microsoft.Ccr.Core_test.dll
 
 refresh_src_files:
 	@find src/ | grep "\\.cs" | sort > ccr.dll.sources

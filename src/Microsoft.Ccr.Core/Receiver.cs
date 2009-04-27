@@ -32,20 +32,26 @@ namespace Microsoft.Ccr.Core {
 
 	public class Receiver :ReceiverTask
 	{
-		//TODO
 		public override void Cleanup (ITask taskToCleanup)
 		{
+			throw new NotImplementedException ();
 		}
 
-		//TODO
 		public override void Consume (IPortElement item)
 		{
+			throw new NotImplementedException ();
 		}
 
-		//TODO
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
+			throw new NotImplementedException ();
 			return false;
+		}
+
+		public override ITask PartialClone ()
+		{
+			throw new NotImplementedException ();
+			return null;
 		}
 
 	}

@@ -72,25 +72,25 @@ namespace Microsoft.Ccr.Core {
 
 		//IPort
 
-		//TODO
 		void IPort.PostUnknownType (object item)
 		{
+			throw new NotImplementedException ();
 		}
 
-		//TODO
 		bool IPort.TryPostUnknownType (object item)
 		{
+			throw new NotImplementedException ();
 			return false;
 		}
 
 
 		//IPortReceive
-		//TODO
 		public void Clear ()
 		{
+			throw new NotImplementedException ();
 		}
 
-		//TODO
+		[MonoTODO]
 		protected virtual object[] GetItems ()
 		{
 			return new object [0];
@@ -101,8 +101,7 @@ namespace Microsoft.Ccr.Core {
 			return this.GetItems ();
 		}
 
-
-		//TODO
+		[MonoTODO]
 		protected virtual ReceiverTask[] GetReceivers ()
 		{
 			return new ReceiverTask [0];
@@ -113,7 +112,6 @@ namespace Microsoft.Ccr.Core {
 			return this.GetReceivers ();
 		}
 
-		//TODO
 		protected virtual void RegisterReceiver (ReceiverTask receiver)
 		{
 			if (receiver == null)
@@ -145,9 +143,9 @@ namespace Microsoft.Ccr.Core {
 			return this.Test ();
 		}
 
-		//TODO
 		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
 		{
+			throw new NotImplementedException ();
 		}
 
 		int IPortReceive.ItemCount
@@ -156,30 +154,29 @@ namespace Microsoft.Ccr.Core {
 		}
 
 
-
 		//IPortArbiterAccess
 
-		//TODO
 		public void PostElement (IPortElement element)
 		{
+			throw new NotImplementedException ();
 		}
 
-		//TODO
 		public IPortElement TestForElement ()
 		{
+			throw new NotImplementedException ();
 			return null;
 		}
 
-		//TODO
 		public IPortElement[] TestForMultipleElements (int count)
 		{
+			throw new NotImplementedException ();
 			return null;
 		}
 
 		public PortMode Mode
 		{
 			get { return mode; }
-			set { mode = value;} //TODO
+			set { mode = value; throw new NotImplementedException (); }
 		}
 
 

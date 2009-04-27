@@ -32,11 +32,9 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 	public interface IPortElement
 	{
-		//TODO
 	}
 
 	public interface IPortElement<T> : IPortElement
 	{
-		//TODO
 	}
 }

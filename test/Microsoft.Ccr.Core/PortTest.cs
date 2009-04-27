@@ -26,6 +26,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
 using Microsoft.Ccr.Core.Arbiters;
 
 using NUnit.Framework;
@@ -107,7 +108,9 @@ namespace Microsoft.Ccr.Core {
 		class MyReceiver : ReceiverTask
 		{
 			int id;
-			public MyReceiver (int id) { this.id = id; }
+			ITask task;
+
+			public MyReceiver (int id, ITask task) { this.id = id; this.task = task; }
 	
 			public override void Cleanup (ITask taskToCleanup)
 			{
@@ -122,10 +125,47 @@ namespace Microsoft.Ccr.Core {
 			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 			{
 				Console.WriteLine ("{0} Evaluate {1} {2}", id, messageNode, deferredTask);
+				if (id == 2)
+					deferredTask = this.task;
 				return id == 2;
 			}
 		}
 
+		class MyTask : TaskCommon
+		{
+			public override ITask PartialClone ()
+			{
+				throw new NotImplementedException ();
+				return null;
+			}
+	
+			public override int PortElementCount
+			{
+				get { throw new NotImplementedException (); }
+			}
+	
+			public override IPortElement this[int index]
+			{
+				get { throw new NotImplementedException (); }
+				set { throw new NotImplementedException (); }
+			}
+
+			public override IEnumerator<ITask> Execute ()
+			{
+				Console.WriteLine ("executing task");
+				return null;
+			}
+		}
+
+		[Test]
+		public void WhatHappensToResultTask ()
+		{
+			var p = new Port<int> ();
+			IPortReceive ipr = p;
+			ipr.RegisterReceiver (new MyReceiver (2, new MyTask ()));
+
+			p.Post (10);
+		}
 
 
 		class EvalTask : ReceiverTask
@@ -209,7 +249,6 @@ namespace Microsoft.Ccr.Core {
 			ipr.RegisterReceiver (new EvalTask (true));
 			p.Post (10);
 			Assert.IsFalse (p.Test (out tmp), "#2");
-
 		}
 	}
 }

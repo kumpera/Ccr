@@ -32,19 +32,19 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 	public abstract class ReceiverTask : TaskCommon
 	{
-		//TODO
+		[MonoTODO]
 		protected ReceiverTask ()
 		{
 		}
 
-		//TODO
+		[MonoTODO]
 		protected ReceiverTask (ITask taskToRun)
 		{
 		}
 
-		//TODO
 		public virtual void Cleanup ()
 		{
+			throw new NotImplementedException ();
 		}
 
 		public abstract void Cleanup (ITask taskToCleanup);
@@ -53,9 +53,26 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 		public abstract bool Evaluate (IPortElement messageNode, ref ITask deferredTask);
 
-		public override IEnumerator<ITask> Execute()
+		public override IEnumerator<ITask> Execute ()
 		{
 			return null;
+		}
+
+		public override ITask PartialClone ()
+		{
+			throw new NotImplementedException ();
+			return null;
+		}
+
+		public override int PortElementCount
+		{
+			get { throw new NotImplementedException (); }
+		}
+
+		public override IPortElement this[int index]
+		{
+			get { throw new NotImplementedException (); }
+			set { throw new NotImplementedException (); }
 		}
 	}
 }

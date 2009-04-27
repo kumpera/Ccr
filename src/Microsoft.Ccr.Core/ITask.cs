@@ -27,12 +27,19 @@
 //
 using System;
 using System.Collections.Generic;
+using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
 	public interface ITask
 	{
 		IEnumerator<ITask> Execute ();
+		ITask PartialClone();
 
+		Handler ArbiterCleanupHandler { get; set; }
+		IPortElement this[int index] { get; set; }
+		Object LinkedIterator { get; set; }
+		int PortElementCount { get; }
+		DispatcherQueue TaskQueue { get; set; }
 	}
 }
