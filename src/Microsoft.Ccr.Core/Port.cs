@@ -34,21 +34,35 @@ namespace Microsoft.Ccr.Core {
 	public class Port<T>: IPort, IPortReceive, IPortArbiterAccess
 	{
 		PortMode mode;
-		List<T> elements = new List<T> ();
+		LinkedList<T> list = new LinkedList<T> ();
+		object _lock = new object ();
 		
 
-		public Port()
+		public Port ()
 		{
 		
 		}
 
 		//TODO
-		public bool Test (out T item)
+		public virtual bool Test (out T item)
 		{
-			item = default (T);
-			return false;
+			lock (_lock) {
+				if (list.Count > 0) {
+					item = list.First.Value;
+					list.RemoveFirst ();
+					return true;
+				}
+				item = default (T);
+				return false;
+			}
 		}
 
+		public virtual void Post (T item)
+		{
+			lock (_lock) {
+				list.AddLast (item);
+			}
+		}
 
 		//IPort
 
@@ -70,13 +84,10 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
+		//TODO
 		object[] IPortReceive.GetItems ()
 		{
-			object[] res = new object[elements.Count];
-			for (int i = 0; i < elements.Count; ++i)
-				res [i] = elements [i];
-
-			return res;
+			return new object [0];
 		}
 
 
@@ -104,7 +115,7 @@ namespace Microsoft.Ccr.Core {
 
 		public int ItemCount
 		{
-			get { return elements.Count; }
+			get { lock (_lock) { return list.Count; } }
 		}
 
 
