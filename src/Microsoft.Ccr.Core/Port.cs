@@ -26,23 +26,115 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
 using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
-	public class Port<T>
+	public class Port<T>: IPort, IPortReceive, IPortArbiterAccess
 	{
 		PortMode mode;
+		List<T> elements = new List<T> ();
+		
 
 		public Port()
 		{
 		
 		}
 
+		//TODO
+		public bool Test (out T item)
+		{
+			item = default (T);
+			return false;
+		}
+
+
+		//IPort
+
+		//TODO
+		public void PostUnknownType (object item)
+		{
+		}
+
+		//TODO
+		public bool TryPostUnknownType (object item)
+		{
+			return false;
+		}
+
+
+		//IPortReceive
+		//TODO
+		public void Clear ()
+		{
+		}
+
+		object[] IPortReceive.GetItems ()
+		{
+			object[] res = new object[elements.Count];
+			for (int i = 0; i < elements.Count; ++i)
+				res [i] = elements [i];
+
+			return res;
+		}
+
+
+		//TODO
+		ReceiverTask[] IPortReceive.GetReceivers ()
+		{
+			return new ReceiverTask [0];
+		}
+
+		//TODO
+		void IPortReceive.RegisterReceiver (ReceiverTask receiver)
+		{
+		}
+
+		//TODO
+		public object Test ()
+		{
+			return null;
+		}
+		
+		//TODO
+		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
+		{
+		}
+
+		public int ItemCount
+		{
+			get { return elements.Count; }
+		}
+
+
+
+		//IPortArbiterAccess
+
+		//TODO
+		public void PostElement (IPortElement element)
+		{
+		}
+
+		//TODO
+		public IPortElement TestForElement ()
+		{
+			return null;
+		}
+
+		//TODO
+		public IPortElement[] TestForMultipleElements (int count)
+		{
+			return null;
+		}
+
 		public PortMode Mode
 		{
 			get { return mode; }
-			set { mode = value;}
+			set { mode = value;} //TODO
 		}
+
+
+
 	}
 }

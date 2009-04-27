@@ -1,5 +1,5 @@
 //
-// PortTest.cs
+// IPortReceive.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -28,28 +28,17 @@
 using System;
 using Microsoft.Ccr.Core.Arbiters;
 
-using NUnit.Framework;
-
 namespace Microsoft.Ccr.Core {
 
-	[TestFixture]
-	public class PortTest
+	public interface IPortReceive
 	{
-		[Test]
-		public void PortStatusAfterConstruction ()
-		{
-			var p = new Port<int> ();
-			int val = 0;
+		void Clear ();
+		object[] GetItems ();
+		ReceiverTask[] GetReceivers ();
+		void RegisterReceiver (ReceiverTask receiver);
+		object Test ();
+		void UnregisterReceiver (ReceiverTask receiver);
 
-			Assert.AreEqual (PortMode.Default, p.Mode, "#1");
-			Assert.AreEqual (0, p.ItemCount, "#2");
-			Assert.IsNull (p.Test (), "#4");
-			Assert.IsFalse (p.Test (out val), "#5");
-
-			IPortReceive rec = p;
-			Assert.AreEqual (0, rec.GetItems ().Length, "#r1");
-			Assert.AreEqual (0, rec.GetReceivers ().Length, "#r2");
-
-		}
+		int ItemCount { get; }
 	}
 }

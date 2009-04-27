@@ -1,5 +1,5 @@
 //
-// PortTest.cs
+// IPortArbiterAccess.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,30 +26,16 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
-using Microsoft.Ccr.Core.Arbiters;
+using Microsoft.Ccr.Core;
 
-using NUnit.Framework;
+namespace Microsoft.Ccr.Core.Arbiters {
 
-namespace Microsoft.Ccr.Core {
-
-	[TestFixture]
-	public class PortTest
+	public interface IPortArbiterAccess
 	{
-		[Test]
-		public void PortStatusAfterConstruction ()
-		{
-			var p = new Port<int> ();
-			int val = 0;
+		void PostElement (IPortElement element);
+		IPortElement TestForElement ();
+		IPortElement[] TestForMultipleElements (int count);
 
-			Assert.AreEqual (PortMode.Default, p.Mode, "#1");
-			Assert.AreEqual (0, p.ItemCount, "#2");
-			Assert.IsNull (p.Test (), "#4");
-			Assert.IsFalse (p.Test (out val), "#5");
-
-			IPortReceive rec = p;
-			Assert.AreEqual (0, rec.GetItems ().Length, "#r1");
-			Assert.AreEqual (0, rec.GetReceivers ().Length, "#r2");
-
-		}
+		PortMode Mode { get; set; }
 	}
 }
