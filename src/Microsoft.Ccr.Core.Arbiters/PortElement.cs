@@ -1,5 +1,5 @@
 //
-// TaskCommon.cs
+// PortElement.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,12 +26,16 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
-using System.Collections.Generic;
+using Microsoft.Ccr.Core;
 
-namespace Microsoft.Ccr.Core {
+namespace Microsoft.Ccr.Core.Arbiters {
 
-	public abstract class TaskCommon
+	public class PortElement<T> : IPortElement<T>
 	{
-		public abstract IEnumerator<ITask> Execute ();
+		public PortElement(T item)
+		{
+		
+		}
 	}
+
 }

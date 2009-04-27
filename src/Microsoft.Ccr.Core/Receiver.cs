@@ -32,7 +32,22 @@ namespace Microsoft.Ccr.Core {
 
 	public class Receiver :ReceiverTask
 	{
-	
+		//TODO
+		public override void Cleanup (ITask taskToCleanup)
+		{
+		}
+
+		//TODO
+		public override void Consume (IPortElement item)
+		{
+		}
+
+		//TODO
+		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+		{
+			return false;
+		}
+
 	}
 	
 	public class Receiver<T> :Receiver

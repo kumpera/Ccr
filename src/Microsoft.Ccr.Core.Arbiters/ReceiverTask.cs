@@ -26,10 +26,36 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
 
 namespace Microsoft.Ccr.Core.Arbiters {
 
 	public abstract class ReceiverTask : TaskCommon
 	{
+		//TODO
+		protected ReceiverTask ()
+		{
+		}
+
+		//TODO
+		protected ReceiverTask (ITask taskToRun)
+		{
+		}
+
+		//TODO
+		public virtual void Cleanup ()
+		{
+		}
+
+		public abstract void Cleanup (ITask taskToCleanup);
+
+		public abstract void Consume (IPortElement item);
+
+		public abstract bool Evaluate (IPortElement messageNode, ref ITask deferredTask);
+
+		public override IEnumerator<ITask> Execute()
+		{
+			return null;
+		}
 	}
 }

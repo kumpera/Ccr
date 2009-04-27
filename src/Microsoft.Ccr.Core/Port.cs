@@ -35,6 +35,7 @@ namespace Microsoft.Ccr.Core {
 	{
 		PortMode mode;
 		LinkedList<T> list = new LinkedList<T> ();
+		LinkedList<ReceiverTask> receivers = new LinkedList<ReceiverTask> ();
 		object _lock = new object ();
 		
 
@@ -59,7 +60,14 @@ namespace Microsoft.Ccr.Core {
 		public virtual void Post (T item)
 		{
 			lock (_lock) {
+				var elem = new PortElement<T> (item);
 				list.AddLast (item);
+				ITask task = null;
+				foreach (ReceiverTask rt in receivers) {
+					if (rt.Evaluate (elem, ref task))
+						break;
+					
+				}
 			}
 		}
 
@@ -107,8 +115,18 @@ namespace Microsoft.Ccr.Core {
 		}
 
 		//TODO
+		protected virtual void RegisterReceiver (ReceiverTask receiver)
+		{
+			if (receiver == null)
+				throw new ArgumentNullException ("receiver");
+			lock (_lock) {
+				this.receivers.AddLast (receiver);
+			}
+		}
+
 		void IPortReceive.RegisterReceiver (ReceiverTask receiver)
 		{
+			this.RegisterReceiver (receiver);
 		}
 
 		public virtual object Test ()

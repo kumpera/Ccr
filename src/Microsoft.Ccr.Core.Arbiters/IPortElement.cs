@@ -34,4 +34,9 @@ namespace Microsoft.Ccr.Core.Arbiters {
 	{
 		//TODO
 	}
+
+	public interface IPortElement<T> : IPortElement
+	{
+		//TODO
+	}
 }

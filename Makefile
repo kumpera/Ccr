@@ -2,6 +2,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/Arbiter.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortArbiterAccess.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortElement.cs \
+		src/Microsoft.Ccr.Core.Arbiters/PortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortMode.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
