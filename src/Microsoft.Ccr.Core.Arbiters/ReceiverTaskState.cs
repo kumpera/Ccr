@@ -1,5 +1,5 @@
 //
-// DispatcherQueue.cs
+// ReceiverTaskState.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,41 +26,15 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using Microsoft.Ccr.Core;
 
-namespace Microsoft.Ccr.Core {
+namespace Microsoft.Ccr.Core.Arbiters {
 
-	public class DispatcherQueue
+	public enum ReceiverTaskState
 	{
-		Dispatcher dispatcher;
-
-		public DispatcherQueue ()
-		{
-			Name = "Unnamed queue using Threadpool";
-		}
-
-		public DispatcherQueue (string name, Dispatcher dispatcher)
-		{
-			if (name == null)
-				throw new ArgumentNullException ("name");
-			if (dispatcher == null)
-				throw new ArgumentNullException ("dispatcher");
-
-			Name = name;
-			this.dispatcher = dispatcher;
-		}
-
-		public string Name { get; set; }
-
-		public Dispatcher Dispatcher
-		{
-			get { return dispatcher; }
-		}
-
-
-		public virtual bool Enqueue (ITask task)
-		{
-			throw new NotImplementedException ();
-		}
-
+		Onetime,
+		Persistent,
+		CleanedUp
 	}
+
 }

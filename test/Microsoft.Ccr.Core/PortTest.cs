@@ -124,56 +124,110 @@ namespace Microsoft.Ccr.Core {
 	
 			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 			{
-				Console.WriteLine ("{0} Evaluate {1} {2}", id, messageNode, deferredTask);
-				if (id == 2)
-					deferredTask = this.task;
-				return id == 2;
+				Console.WriteLine ("\n{0} Evaluate {1} {2}", id, messageNode, deferredTask);
+				deferredTask = this.task;
+				return true;
 			}
 		}
 
-		class MyTask : TaskCommon
+		class MyTask : ITask
 		{
-			public override ITask PartialClone ()
+			public ITask PartialClone ()
 			{
+				Console.WriteLine ("PartialClone"); 
 				throw new NotImplementedException ();
 				return null;
 			}
-	
-			public override int PortElementCount
-			{
-				get { throw new NotImplementedException (); }
-			}
-	
-			public override IPortElement this[int index]
-			{
-				get { throw new NotImplementedException (); }
-				set { throw new NotImplementedException (); }
-			}
 
-			public override IEnumerator<ITask> Execute ()
+			public IEnumerator<ITask> Execute ()
 			{
 				Console.WriteLine ("executing task");
 				return null;
 			}
+
+			public int PortElementCount
+			{
+				get { Console.WriteLine ("GET count"); throw new NotImplementedException (); }
+			}
+	
+			public IPortElement this[int index]
+			{
+				get { Console.WriteLine ("GET idx"); throw new NotImplementedException (); }
+				set { Console.WriteLine ("SET idx"); throw new NotImplementedException (); }
+			}
+
+			public Handler ArbiterCleanupHandler
+			{
+				get { Console.WriteLine ("GET handler"); throw new NotImplementedException (); }
+				set { Console.WriteLine ("SET handler"); throw new NotImplementedException (); }
+			}
+			public Object LinkedIterator
+			{
+				get { Console.WriteLine ("GET LINKINT"); throw new NotImplementedException (); }
+				set { Console.WriteLine ("SET LINKINT"); throw new NotImplementedException (); }
+			}
+			public DispatcherQueue TaskQueue 
+			{
+				get { Console.WriteLine ("GET taskK"); throw new NotImplementedException (); }
+				set { Console.WriteLine ("SET taskK"); throw new NotImplementedException (); }
+			}
 		}
 
-		[Test]
+		/* [Test]
 		public void WhatHappensToResultTask ()
 		{
 			var p = new Port<int> ();
 			IPortReceive ipr = p;
-			ipr.RegisterReceiver (new MyReceiver (2, new MyTask ()));
+
+			MyReceiver mr = new MyReceiver (2, new MyTask ());
+			mr.TaskQueue = new  DispatcherQueue (); 
+			ipr.RegisterReceiver (mr);
 
 			p.Post (10);
+		}*/
+
+		class VoidDispatcherQueue : DispatcherQueue
+		{
+			public int queuedTasks;
+
+			public override bool Enqueue (ITask task)
+			{
+				++queuedTasks;
+				return true;
+			}
 		}
 
+		class NullTask : TaskCommon
+		{
+			public override ITask PartialClone ()
+			{
+				return null;
+			}
+
+			public override IEnumerator<ITask> Execute ()
+			{
+				return null;
+			}
+			public override IPortElement this[int index]
+			{
+				get { return null; }
+				set { }
+			}
+
+			public override int PortElementCount
+			{
+				get { return 0; }
+			}
+		}
 
 		class EvalTask : ReceiverTask
 		{
 			public bool eval;
 			public int tested;
+			public ITask task;
 
 			public EvalTask (bool eval) {  this.eval = eval; }
+			public EvalTask (bool eval, ITask task) {  this.eval = eval; this.task = task; }
 
 			public override void Cleanup (ITask taskToCleanup)
 			{
@@ -186,8 +240,87 @@ namespace Microsoft.Ccr.Core {
 			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 			{
 				++tested;
+				if (task != null)
+					deferredTask = task;
 				return eval;
 			}
+		}
+
+		[Test]
+		[Category ("NotDotNet")]
+		public void ReceiverThatReturnsDeferredTaskAndHaveNoTaskQueue ()
+		{
+			var p = new Port<int> ();
+			IPortReceive ipr = p;
+			ipr.RegisterReceiver (new EvalTask (true, new NullTask ()));
+		}
+
+		[Test]
+		public void OneShotReceiverReturnsTask ()
+		{
+			var p = new Port<int> ();
+			IPortReceive ipr = p;
+			VoidDispatcherQueue dq = new VoidDispatcherQueue ();
+			ReceiverTask rt = new EvalTask (true, new NullTask ());
+			rt.State = ReceiverTaskState.Onetime;
+			rt.TaskQueue = dq;
+			ipr.RegisterReceiver (rt);
+
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#1");
+			p.Post (10);
+			Assert.AreEqual (1, dq.queuedTasks, "#2");
+			Assert.AreEqual (0, ipr.GetReceivers ().Length, "#3");
+		}
+
+		[Test]
+		public void PersistentReceiverReturnsTask ()
+		{
+			var p = new Port<int> ();
+			IPortReceive ipr = p;
+			VoidDispatcherQueue dq = new VoidDispatcherQueue ();
+			ReceiverTask rt = new EvalTask (true, new NullTask ());
+			rt.State = ReceiverTaskState.Persistent;
+			rt.TaskQueue = dq;
+			ipr.RegisterReceiver (rt);
+
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#1");
+			p.Post (10);
+			Assert.AreEqual (1, dq.queuedTasks, "#2");
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#3");
+			p.Post (20);
+			Assert.AreEqual (2, dq.queuedTasks, "#4");
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#5");
+		}
+
+
+		[Test]
+		public void CleanedUpReceiverReturnsTask ()
+		{
+			var p = new Port<int> ();
+			IPortReceive ipr = p;
+			VoidDispatcherQueue dq = new VoidDispatcherQueue ();
+			ReceiverTask rt = new EvalTask (true, new NullTask ());
+			rt.State = ReceiverTaskState.CleanedUp;
+			rt.TaskQueue = dq;
+			ipr.RegisterReceiver (rt);
+
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#1");
+			p.Post (10);
+			Assert.AreEqual (1, dq.queuedTasks, "#2");
+			Assert.AreEqual (0, ipr.GetReceivers ().Length, "#3");
+		}
+
+		[Test]
+		public void RegisterReceiverChangesGetReceivers ()
+		{
+			IPortReceive ipr = new Port<int> ();	
+			ReceiverTask rt = new EvalTask (true);
+
+			Assert.AreEqual (0, ipr.GetReceivers ().Length, "#1");
+			ipr.RegisterReceiver (rt);			
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#2");
+			ipr.RegisterReceiver (rt);			
+			Assert.AreEqual (2, ipr.GetReceivers ().Length, "#3");
 		}
 
 		[Test]

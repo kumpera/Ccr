@@ -74,5 +74,8 @@ namespace Microsoft.Ccr.Core.Arbiters {
 			get { throw new NotImplementedException (); }
 			set { throw new NotImplementedException (); }
 		}
+
+
+		public ReceiverTaskState State { get; set; }
 	}
 }

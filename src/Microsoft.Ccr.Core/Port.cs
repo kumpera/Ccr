@@ -61,10 +61,19 @@ namespace Microsoft.Ccr.Core {
 		{
 			lock (_lock) {
 				var elem = new PortElement<T> (item);
-				ITask task = null;
 				foreach (ReceiverTask rt in receivers) {
-					if (rt.Evaluate (elem, ref task))
+					ITask task = null;
+					if (rt.Evaluate (elem, ref task)) {
+						if (task != null) {
+							DispatcherQueue dq = rt.TaskQueue;
+							if (dq != null)
+								dq.Enqueue (task);
+						}
+						if (rt.State != ReceiverTaskState.Persistent)
+							receivers.Remove (rt);
 						return;
+					}
+
 				}
 				list.AddLast (item);
 			}
@@ -101,10 +110,13 @@ namespace Microsoft.Ccr.Core {
 			return this.GetItems ();
 		}
 
-		[MonoTODO]
 		protected virtual ReceiverTask[] GetReceivers ()
 		{
-			return new ReceiverTask [0];
+			lock (_lock) {
+				ReceiverTask[] res = new ReceiverTask [receivers.Count];
+				receivers.CopyTo (res, 0);
+				return res;
+			}
 		}
 
 		ReceiverTask[] IPortReceive.GetReceivers ()

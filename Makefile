@@ -5,6 +5,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortMode.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
+		src/Microsoft.Ccr.Core.Arbiters/ReceiverTaskState.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
 		src/Microsoft.Ccr.Core/DispatcherQueue.cs \
 		src/Microsoft.Ccr.Core/Handlers.cs \
