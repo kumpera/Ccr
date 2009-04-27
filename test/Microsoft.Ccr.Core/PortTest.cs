@@ -91,7 +91,16 @@ namespace Microsoft.Ccr.Core {
 			int res = 99;
 			Assert.IsFalse (p.Test (out res), "#1");
 			Assert.AreEqual (0, res, "#2");
+		}
 
+		[Test]
+		public void NonGenericTest ()
+		{
+			var p = new Port<int> ();
+			p.Post (10);
+
+			Assert.AreEqual (10, p.Test (), "#1");			
+			Assert.AreEqual (null, p.Test (), "#1");			
 		}
 
 	}

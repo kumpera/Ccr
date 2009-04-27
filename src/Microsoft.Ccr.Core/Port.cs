@@ -102,10 +102,16 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
-		//TODO
 		public object Test ()
 		{
-			return null;
+			lock (_lock) {
+				if (list.Count > 0) {
+					object res = list.First.Value;
+					list.RemoveFirst ();
+					return res;
+				}
+				return null;
+			}
 		}
 		
 		//TODO
