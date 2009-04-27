@@ -47,13 +47,6 @@ namespace Microsoft.Ccr.Core {
 			throw new NotImplementedException ();
 			return false;
 		}
-
-		public override ITask PartialClone ()
-		{
-			throw new NotImplementedException ();
-			return null;
-		}
-
 	}
 	
 	public class Receiver<T> :Receiver

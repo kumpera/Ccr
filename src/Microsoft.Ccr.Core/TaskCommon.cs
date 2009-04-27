@@ -33,20 +33,15 @@ namespace Microsoft.Ccr.Core {
 
 	public abstract class TaskCommon : ITask
 	{
-		public abstract IEnumerator<ITask> Execute ();
-		public abstract ITask PartialClone ();
-
 		protected TaskCommon () {}
 
-
-		public Handler ArbiterCleanupHandler { get; set; }
-
+		public abstract IEnumerator<ITask> Execute ();
+		public abstract ITask PartialClone ();
 		public abstract IPortElement this[int index] { get; set; }
-
-		public Object LinkedIterator { get; set; }
-
 		public abstract int PortElementCount { get; }
 
+		public Handler ArbiterCleanupHandler { get; set; }
+		public Object LinkedIterator { get; set; }
 		public DispatcherQueue TaskQueue { get; set; }
 
 	}
