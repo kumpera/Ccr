@@ -104,11 +104,11 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (null, ir.Test (), "#1");			
 		}
 
-		/*class MyReceiver : ReceiverTask
+		class MyReceiver : ReceiverTask
 		{
 			int id;
 			public MyReceiver (int id) { this.id = id; }
-
+	
 			public override void Cleanup (ITask taskToCleanup)
 			{
 				Console.WriteLine ("{0} Cleanup {1}", id, taskToCleanup );
@@ -124,7 +124,9 @@ namespace Microsoft.Ccr.Core {
 				Console.WriteLine ("{0} Evaluate {1} {2}", id, messageNode, deferredTask);
 				return id == 2;
 			}
-		}*/
+		}
+
+
 
 		class EvalTask : ReceiverTask
 		{
@@ -189,6 +191,25 @@ namespace Microsoft.Ccr.Core {
 			p.Post (10);
 			Assert.AreEqual (2, a.tested, "#1");
 			Assert.AreEqual (1, b.tested, "#2");
+		}
+
+		[Test]
+		public void IfReceiverReturnsTrueMessageIsNotEnqueued ()
+		{
+			var p = new Port<int> ();
+			int tmp;
+			IPortReceive ipr = p;
+			ipr.RegisterReceiver (new EvalTask (false));
+
+			p.Post (10);
+			Assert.IsTrue (p.Test (out tmp), "#1");
+
+			p = new Port <int> ();
+			ipr = p;
+			ipr.RegisterReceiver (new EvalTask (true));
+			p.Post (10);
+			Assert.IsFalse (p.Test (out tmp), "#2");
+
 		}
 	}
 }

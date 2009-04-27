@@ -61,13 +61,12 @@ namespace Microsoft.Ccr.Core {
 		{
 			lock (_lock) {
 				var elem = new PortElement<T> (item);
-				list.AddLast (item);
 				ITask task = null;
 				foreach (ReceiverTask rt in receivers) {
 					if (rt.Evaluate (elem, ref task))
-						break;
-					
+						return;
 				}
+				list.AddLast (item);
 			}
 		}
 
