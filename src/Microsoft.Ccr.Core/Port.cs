@@ -43,7 +43,6 @@ namespace Microsoft.Ccr.Core {
 		
 		}
 
-		//TODO
 		public virtual bool Test (out T item)
 		{
 			lock (_lock) {
