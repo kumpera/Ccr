@@ -1,5 +1,5 @@
 //
-// ReceiverTask.cs
+// Dispatcher.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -27,9 +27,10 @@
 //
 using System;
 
-namespace Microsoft.Ccr.Core.Arbiters {
+namespace Microsoft.Ccr.Core {
 
-	public abstract class ReceiverTask : TaskCommon
+	public sealed class Dispatcher
 	{
+	
 	}
 }

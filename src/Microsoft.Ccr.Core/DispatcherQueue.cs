@@ -1,5 +1,5 @@
 //
-// ReceiverTask.cs
+// DispatcherQueue.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -27,9 +27,33 @@
 //
 using System;
 
-namespace Microsoft.Ccr.Core.Arbiters {
+namespace Microsoft.Ccr.Core {
 
-	public abstract class ReceiverTask : TaskCommon
+	public class DispatcherQueue
 	{
+		Dispatcher dispatcher;
+
+		public DispatcherQueue ()
+		{
+			Name = "Unnamed queue using Threadpool";
+		}
+
+		public DispatcherQueue (string name, Dispatcher dispatcher)
+		{
+			if (name == null)
+				throw new ArgumentNullException ("name");
+			if (dispatcher == null)
+				throw new ArgumentNullException ("dispatcher");
+
+			Name = name;
+			this.dispatcher = dispatcher;
+		}
+
+		public string Name { get; set; }
+
+		public Dispatcher Dispatcher
+		{
+			get { return dispatcher; }
+		}
 	}
 }

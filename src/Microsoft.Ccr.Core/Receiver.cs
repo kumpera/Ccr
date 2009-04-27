@@ -1,5 +1,5 @@
 //
-// ReceiverTask.cs
+// TaskCommon.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,10 +26,17 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using Microsoft.Ccr.Core.Arbiters;
 
-namespace Microsoft.Ccr.Core.Arbiters {
+namespace Microsoft.Ccr.Core {
 
-	public abstract class ReceiverTask : TaskCommon
+	public class Receiver :ReceiverTask
 	{
+	
+	}
+	
+	public class Receiver<T> :Receiver
+	{
+	
 	}
 }

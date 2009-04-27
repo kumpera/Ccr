@@ -1,5 +1,5 @@
 //
-// ReceiverTask.cs
+// DispatcherQueueTest.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,10 +26,42 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using Microsoft.Ccr.Core.Arbiters;
 
-namespace Microsoft.Ccr.Core.Arbiters {
+using NUnit.Framework;
 
-	public abstract class ReceiverTask : TaskCommon
+namespace Microsoft.Ccr.Core {
+
+	[TestFixture]
+	public class DispatcherQueueTest
 	{
+		[Test]
+		public void EmptyCtor ()
+		{
+			var dq = new DispatcherQueue ();
+			Assert.IsNotNull (dq.Name, "#1");
+			Assert.IsNull (dq.Dispatcher, "#2");
+		}
+
+		[Test]
+		public void NameDispatcherCtor ()
+		{
+			try {
+				new DispatcherQueue ("tst", null);
+				Assert.Fail ("#1");
+			} catch (ArgumentNullException){}
+
+			try {
+				new DispatcherQueue (null, new Dispatcher ());
+				Assert.Fail ("#2");
+			} catch (ArgumentNullException){}
+
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp);
+
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			
+		}
 	}
 }

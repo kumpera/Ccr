@@ -4,12 +4,19 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortMode.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
+		src/Microsoft.Ccr.Core/Dispatcher.cs \
+		src/Microsoft.Ccr.Core/DispatcherQueue.cs \
 		src/Microsoft.Ccr.Core/Handlers.cs \
 		src/Microsoft.Ccr.Core/IPort.cs \
 		src/Microsoft.Ccr.Core/IPortReceive.cs \
+		src/Microsoft.Ccr.Core/ITask.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
+		src/Microsoft.Ccr.Core/Receiver.cs \
+		src/Microsoft.Ccr.Core/TaskCommon.cs \
 
-TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs
+TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
+			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
+
 
 all: deps Microsoft.Ccr.dll Microsoft.Ccr_test.dll
 
