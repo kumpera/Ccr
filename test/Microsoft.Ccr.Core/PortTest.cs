@@ -82,5 +82,17 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsTrue (p.Test (out res), "#5");
 			Assert.AreEqual (30, res, "#6");
 		}
+
+		[Test]
+		public void TestWithEmptyPort ()
+		{
+			var p = new Port<int> ();
+
+			int res = 99;
+			Assert.IsFalse (p.Test (out res), "#1");
+			Assert.AreEqual (0, res, "#2");
+
+		}
+
 	}
 }
