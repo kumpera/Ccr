@@ -46,8 +46,8 @@ namespace Microsoft.Ccr.Core {
 			IPortReceive rec = p;
 			Assert.AreEqual (0, rec.GetItems ().Length, "#r1");
 			Assert.AreEqual (0, rec.GetReceivers ().Length, "#r2");
-			Assert.IsNull (p.Test (), "#r3");
-			Assert.AreEqual (0, p.ItemCount, "#r4");
+			Assert.IsNull (rec.Test (), "#r3");
+			Assert.AreEqual (0, rec.ItemCount, "#r4");
 
 			IPortArbiterAccess paa = p;
 			Assert.AreEqual (PortMode.Default, paa.Mode, "#p1");
@@ -99,8 +99,9 @@ namespace Microsoft.Ccr.Core {
 			var p = new Port<int> ();
 			p.Post (10);
 
-			Assert.AreEqual (10, p.Test (), "#1");			
-			Assert.AreEqual (null, p.Test (), "#1");			
+			IPortReceive ir = p;
+			Assert.AreEqual (10, ir.Test (), "#1");			
+			Assert.AreEqual (null, ir.Test (), "#1");			
 		}
 
 	}

@@ -1,5 +1,5 @@
 //
-// AssemblyInfo.cs.cs
+// Handlers.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,16 +26,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
-using System.Reflection;
-using System.Resources;
-using System.Security;
-using System.Diagnostics;
-using System.Security.Permissions;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
-[assembly: AssemblyVersion ("2.0.913.0")]
-[assembly: AssemblyDelaySign (true)]
-[assembly: AssemblyKeyFile ("ccr.core.pub")]
-
-
+namespace Microsoft.Ccr.Core {
+	public delegate void Handler();
+	public delegate void Handler<T>(T parameter0);
+	public delegate void Handler<T0, T1>(T0 parameter0, T1 parameter1);
+	public delegate void Handler<T0, T1, T2>(T0 parameter0, T1 parameter1, T2 parameter2);
+}

@@ -4,6 +4,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortMode.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
+		src/Microsoft.Ccr.Core/Handlers.cs \
 		src/Microsoft.Ccr.Core/IPort.cs \
 		src/Microsoft.Ccr.Core/IPortReceive.cs \
 		src/Microsoft.Ccr.Core/Port.cs \

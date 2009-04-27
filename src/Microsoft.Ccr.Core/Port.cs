@@ -66,12 +66,12 @@ namespace Microsoft.Ccr.Core {
 		//IPort
 
 		//TODO
-		public void PostUnknownType (object item)
+		void IPort.PostUnknownType (object item)
 		{
 		}
 
 		//TODO
-		public bool TryPostUnknownType (object item)
+		bool IPort.TryPostUnknownType (object item)
 		{
 			return false;
 		}
@@ -84,16 +84,26 @@ namespace Microsoft.Ccr.Core {
 		}
 
 		//TODO
-		object[] IPortReceive.GetItems ()
+		protected virtual object[] GetItems ()
 		{
 			return new object [0];
 		}
 
+		object[] IPortReceive.GetItems ()
+		{
+			return this.GetItems ();
+		}
+
 
 		//TODO
-		ReceiverTask[] IPortReceive.GetReceivers ()
+		protected virtual ReceiverTask[] GetReceivers ()
 		{
 			return new ReceiverTask [0];
+		}
+
+		ReceiverTask[] IPortReceive.GetReceivers ()
+		{
+			return this.GetReceivers ();
 		}
 
 		//TODO
@@ -101,7 +111,7 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
-		public object Test ()
+		public virtual object Test ()
 		{
 			lock (_lock) {
 				if (list.Count > 0) {
@@ -112,13 +122,18 @@ namespace Microsoft.Ccr.Core {
 				return null;
 			}
 		}
-		
+
+		object IPortReceive.Test ()
+		{
+			return this.Test ();
+		}
+
 		//TODO
 		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
 		{
 		}
 
-		public int ItemCount
+		int IPortReceive.ItemCount
 		{
 			get { lock (_lock) { return list.Count; } }
 		}
