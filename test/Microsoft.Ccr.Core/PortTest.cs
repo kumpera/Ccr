@@ -475,7 +475,6 @@ namespace Microsoft.Ccr.Core {
 
 		}
 
-
 		[Test]
 		public void TryPostUnknownType ()
 		{
@@ -495,5 +494,19 @@ namespace Microsoft.Ccr.Core {
 
 		}
 
+
+		[Test]
+		public void Clear ()
+		{
+			var p = new Port<int> ();
+
+			p.Post (10);
+			p.Post (10);
+			Assert.AreEqual (2, p.ItemCount, "#1");
+			p.Clear ();
+			Assert.AreEqual (0, p.ItemCount, "#2");
+			p.Clear ();
+			Assert.AreEqual (0, p.ItemCount, "#3");
+		}
 	}
 }

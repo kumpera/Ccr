@@ -79,6 +79,19 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
+		public override int GetHashCode ()
+		{
+			return typeof (T).GetHashCode ();
+		}
+
+		[MonoTODO ("make this more informative")]
+		public override string ToString ()
+		{
+			lock (_lock) {
+				return String.Format ("Port\n\t Type: {0}\n\t Elements: {1}\n\t Receivers: {2}", typeof (T), list.Count, receivers.Count);
+			} 
+		}
+
 		public static implicit operator T (Port<T> port)
 		{
 			T t;
@@ -112,11 +125,12 @@ namespace Microsoft.Ccr.Core {
 			return this.TryPostUnknownType (item);
 		}
 
-
 		//IPortReceive
 		public void Clear ()
 		{
-			throw new NotImplementedException ();
+			lock (_lock) {
+				list.Clear ();
+			}
 		}
 
 		[MonoTODO]
