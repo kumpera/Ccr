@@ -1,5 +1,5 @@
 //
-// TaskExecutionPolicy.cs
+// IPortSet.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,15 +26,17 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
+using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
-	public enum TaskExecutionPolicy
+	public interface IPortSet : IPort
 	{
-		Unconstrained,
-		ConstrainQueueDepthDiscardTasks,
-		ConstrainQueueDepthThrottleExecution,
-		ConstrainSchedulingRateDiscardTasks,
-		ConstrainSchedulingRateThrottleExecution
+		T Test<T> ();
+		IPort this[Type portItemType] { get; }
+		PortSetMode Mode { get; set; }
+		ICollection<IPort> Ports { get; }
+		Port<Object> SharedPort { get; }
 	}
 }

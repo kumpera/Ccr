@@ -1,5 +1,5 @@
 //
-// TaskExecutionPolicy.cs
+// ICausality.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -29,12 +29,11 @@ using System;
 
 namespace Microsoft.Ccr.Core {
 
-	public enum TaskExecutionPolicy
+	public interface ICausality
 	{
-		Unconstrained,
-		ConstrainQueueDepthDiscardTasks,
-		ConstrainQueueDepthThrottleExecution,
-		ConstrainSchedulingRateDiscardTasks,
-		ConstrainSchedulingRateThrottleExecution
+		IPort CoordinationPort { get; }
+		IPort ExceptionPort { get; }
+		Guid Guid { get; }
+		string Name { get; }
 	}
 }
