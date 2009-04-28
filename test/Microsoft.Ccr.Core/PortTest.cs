@@ -325,6 +325,43 @@ namespace Microsoft.Ccr.Core {
 
 		[Test]
 		[Category ("NotDotNet")]
+		public void UnRegisterThrowsOnNull ()
+		{
+			try {
+				var p = new Port<int> ();
+				IPortReceive ipr = p;
+				ipr.UnregisterReceiver (null);
+				Assert.Fail ("#1");
+			} catch (ArgumentNullException){}
+		}
+
+
+		[Test]
+		public void UnRegisterReceiverChangesGetReceivers ()
+		{
+			IPortReceive ipr = new Port<int> ();	
+			ReceiverTask rt = new EvalTask (true);
+
+			Assert.AreEqual (0, ipr.GetReceivers ().Length, "#1");
+			ipr.RegisterReceiver (rt);			
+			ipr.RegisterReceiver (rt);			
+			Assert.AreEqual (2, ipr.GetReceivers ().Length, "#3");
+			ipr.UnregisterReceiver (rt);
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#4");
+			ipr.UnregisterReceiver (rt);
+			Assert.AreEqual (0, ipr.GetReceivers ().Length, "#5");
+		}
+		
+		[Test]
+		public void UnRegisterReceiverIgnoreNonRegistered ()
+		{
+			IPortReceive ipr = new Port<int> ();	
+			ReceiverTask rt = new EvalTask (true);
+			ipr.UnregisterReceiver (rt);
+		}
+
+		[Test]
+		[Category ("NotDotNet")]
 		public void RegisterThrowsOnNull ()
 		{
 			try {

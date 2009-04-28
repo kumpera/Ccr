@@ -157,7 +157,11 @@ namespace Microsoft.Ccr.Core {
 
 		protected virtual void UnregisterReceiver (ReceiverTask receiver)
 		{
-			throw new NotImplementedException ();
+			if (receiver == null)
+				throw new ArgumentNullException ("receiver");
+			lock (_lock) {
+				this.receivers.Remove (receiver);
+			}
 		}
 
 		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
