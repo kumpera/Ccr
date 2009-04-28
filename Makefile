@@ -4,6 +4,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortMode.cs \
+		src/Microsoft.Ccr.Core.Arbiters/PortSetMode.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTaskState.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
@@ -15,6 +16,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
+		src/Microsoft.Ccr.Core/Tuple.cs \
 		src/MonoTODOAttribute.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
