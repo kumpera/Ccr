@@ -1,5 +1,5 @@
 //
-// PortElement.cs
+// IArbiterTask.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -30,36 +30,9 @@ using Microsoft.Ccr.Core;
 
 namespace Microsoft.Ccr.Core.Arbiters {
 
-	public class PortElement<T> : IPortElement<T>
+	public interface IArbiterTask : ITask
 	{
-		T item;
-
-		public PortElement (T item)
-		{
-			this.item = item;
-		}
-
-		public PortElement (T item, Port<T> owner)
-		{
-			this.item = item;
-			this.Owner = owner; 
-		}
-
-		public T TypedItem
-		{
-			get { return item; }
-		}
-
-		public Object CausalityContext { get; set; }
-
-		public Object Item
-		{
-			get { return item; }
-		}
-
-		public IPortElement Next { get; set; }
-		public IPort Owner { get; set; }
-		public IPortElement Previous { get; set; }
+		bool Evaluate(ReceiverTask receiver, ref ITask deferredTask);
+		ArbiterTaskState ArbiterState { get; }
 	}
-
 }

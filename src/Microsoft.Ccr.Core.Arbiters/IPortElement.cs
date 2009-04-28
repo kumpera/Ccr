@@ -32,9 +32,15 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 	public interface IPortElement
 	{
+		Object CausalityContext { get; set; }
+		Object Item { get; }
+		IPortElement Next { get; set; }
+		IPort Owner { get; set; }
+		IPortElement Previous { get; set; }
 	}
 
 	public interface IPortElement<T> : IPortElement
 	{
+		T TypedItem { get; }
 	}
 }

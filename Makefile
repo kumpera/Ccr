@@ -1,5 +1,7 @@
 FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/Arbiter.cs \
+		src/Microsoft.Ccr.Core.Arbiters/ArbiterTaskState.cs \
+		src/Microsoft.Ccr.Core.Arbiters/IArbiterTask.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortArbiterAccess.cs \
 		src/Microsoft.Ccr.Core.Arbiters/IPortElement.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortElement.cs \
@@ -21,6 +23,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
+			 test/Microsoft.Ccr.Core.Arbiters/PortElementTest.cs \
 
 
 all: deps Microsoft.Ccr.dll Microsoft.Ccr_test.dll

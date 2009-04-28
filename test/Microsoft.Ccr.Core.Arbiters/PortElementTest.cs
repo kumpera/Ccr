@@ -1,5 +1,5 @@
 //
-// PortElement.cs
+// PortElementTest.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -28,38 +28,21 @@
 using System;
 using Microsoft.Ccr.Core;
 
+using NUnit.Framework;
+
 namespace Microsoft.Ccr.Core.Arbiters {
 
-	public class PortElement<T> : IPortElement<T>
+	[TestFixture]
+	public class PortElementTest
 	{
-		T item;
-
-		public PortElement (T item)
+		[Test]
+		public void TwoArgsCtor ()
 		{
-			this.item = item;
+			var port = new Port<int> ();
+			var pe = new PortElement<int> (10, port);
+			Assert.AreEqual (10, pe.TypedItem, "#1");
+			Assert.AreEqual (10, pe.Item, "#2");
+			Assert.AreEqual (port, pe.Owner, "#3");
 		}
-
-		public PortElement (T item, Port<T> owner)
-		{
-			this.item = item;
-			this.Owner = owner; 
-		}
-
-		public T TypedItem
-		{
-			get { return item; }
-		}
-
-		public Object CausalityContext { get; set; }
-
-		public Object Item
-		{
-			get { return item; }
-		}
-
-		public IPortElement Next { get; set; }
-		public IPort Owner { get; set; }
-		public IPortElement Previous { get; set; }
 	}
-
 }
