@@ -1,5 +1,5 @@
 //
-// DispatcherOptions.cs
+// EmptyValue.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,16 +26,17 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
-using Microsoft.Ccr.Core;
+using System.Collections.Generic;
+using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
-	[Flags]
-	public enum DispatcherOptions
+	public class EmptyValue
 	{
-		None,
-		UseBackgroundThreads = 1,
-		UseProcessorAffinity = 2,
-		SuppressDisposeExceptions = 4
+		public static EmptyValue SharedInstance = new EmptyValue ();
+
+		public EmptyValue ()
+		{
+		}
 	}
 }

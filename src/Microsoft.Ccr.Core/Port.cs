@@ -155,9 +155,14 @@ namespace Microsoft.Ccr.Core {
 			return this.Test ();
 		}
 
-		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
+		protected virtual void UnregisterReceiver (ReceiverTask receiver)
 		{
 			throw new NotImplementedException ();
+		}
+
+		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
+		{
+			this.UnregisterReceiver (receiver);
 		}
 
 		int IPortReceive.ItemCount

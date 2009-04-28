@@ -12,6 +12,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
 		src/Microsoft.Ccr.Core/DispatcherOptions.cs \
 		src/Microsoft.Ccr.Core/DispatcherQueue.cs \
+		src/Microsoft.Ccr.Core/EmptyValue.cs \
 		src/Microsoft.Ccr.Core/Handlers.cs \
 		src/Microsoft.Ccr.Core/InterleaveReceivers.cs \
 		src/Microsoft.Ccr.Core/ICausality.cs \
