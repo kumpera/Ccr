@@ -420,5 +420,18 @@ namespace Microsoft.Ccr.Core {
 			p.Post (10);
 			Assert.IsFalse (p.Test (out tmp), "#2");
 		}
+
+		[Test]
+		public void ImplicitCastRemovesElement ()
+		{
+			var p = new Port<int> ();
+			int x;
+			p.Post (10);
+			x = p;
+			Assert.AreEqual (10, x, "#1");
+			x = p;
+			Assert.AreEqual (0, x, "#2");
+
+		}
 	}
 }

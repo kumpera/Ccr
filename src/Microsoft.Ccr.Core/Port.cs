@@ -79,6 +79,12 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
+		public static implicit operator T (Port<T> port)
+		{
+			T t;
+			port.Test (out t);
+			return t;
+		}
 		//IPort
 
 		void IPort.PostUnknownType (object item)
@@ -199,8 +205,5 @@ namespace Microsoft.Ccr.Core {
 			get { return mode; }
 			set { mode = value; throw new NotImplementedException (); }
 		}
-
-
-
 	}
 }
