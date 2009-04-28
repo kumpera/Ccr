@@ -1,5 +1,5 @@
 //
-// Handlers.cs
+// TaskExecutionPolicy.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,22 +26,16 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
-using System.Collections.Generic;
+using Microsoft.Ccr.Core;
 
 namespace Microsoft.Ccr.Core {
-	public delegate void Handler();
-	public delegate void Handler<T>(T parameter0);
-	public delegate void Handler<T0, T1>(T0 parameter0, T1 parameter1);
-	public delegate void Handler<T0, T1, T2>(T0 parameter0, T1 parameter1, T2 parameter2);
 
-	public delegate IEnumerator<ITask> IteratorHandler ();
-	public delegate IEnumerator<ITask> IteratorHandler<T0> (T0 parameter0);
-	public delegate IEnumerator<ITask> IteratorHandler<T0, T1> (T0 parameter0, T0 parameter1);
-	public delegate IEnumerator<ITask> IteratorHandler<T0, T1, T2> (T0 parameter0, T0 parameter1, T0 parameter2);
-
-	public delegate void VariableArgumentHandler<T> (params T[] t);
-	public delegate void VariableArgumentHandler<T0, T> (T0 t0,	params T[] t);
-
-
-
+	public enum TaskExecutionPolicy
+	{
+		Unconstrained,
+		ConstrainQueueDepthDiscardTasks,
+		ConstrainQueueDepthThrottleExecution,
+		ConstrainSchedulingRateDiscardTasks,
+		ConstrainSchedulingRateThrottleExecution
+	}
 }

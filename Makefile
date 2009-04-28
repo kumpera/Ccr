@@ -10,14 +10,17 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTaskState.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
+		src/Microsoft.Ccr.Core/DispatcherOptions.cs \
 		src/Microsoft.Ccr.Core/DispatcherQueue.cs \
 		src/Microsoft.Ccr.Core/Handlers.cs \
+		src/Microsoft.Ccr.Core/InterleaveReceivers.cs \
 		src/Microsoft.Ccr.Core/IPort.cs \
 		src/Microsoft.Ccr.Core/IPortReceive.cs \
 		src/Microsoft.Ccr.Core/ITask.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
+		src/Microsoft.Ccr.Core/TaskExecutionPolicy.cs \
 		src/Microsoft.Ccr.Core/Tuple.cs \
 		src/MonoTODOAttribute.cs \
 
