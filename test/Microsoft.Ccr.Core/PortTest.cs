@@ -431,7 +431,69 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (10, x, "#1");
 			x = p;
 			Assert.AreEqual (0, x, "#2");
+		}
+
+		[Test]
+		public void PostUnknownType ()
+		{
+			var p = new Port<int> ();
+			int tmp;
+
+			p.PostUnknownType (10);
+			Assert.AreEqual (1, p.ItemCount, "#1");
+			p.Post (20);
+			Assert.AreEqual (2, p.ItemCount, "#2");
+			Assert.AreEqual (10, p.Test (), "#3");
+			p.Test (out tmp);
+			Assert.AreEqual (20, tmp, "#4");
+		}
+
+		[Test]
+		public void PostUnknownTypeThrowsOnBadType ()
+		{
+			var p = new Port<int> ();
+			object obj = new object ();
+			try {
+				p.PostUnknownType (obj);
+				Assert.Fail ("#1");
+			} catch (InvalidCastException ex) {} /*LAMEDOCS LAMEIMPL*/
+			/*} catch (PortNotFoundException ex) {
+				Assert.AreEqual (p, ex.Port);
+				Assert.AreEqual (obj, ex.ObjectPosted);
+				Assert.AreEqual ("zzz", ex.Message);
+			}*/
+		}
+
+		[Test]
+		public void PostUnknownTypeThrowsOnNull ()
+		{
+			var p = new Port<int> ();
+			try {
+				p.PostUnknownType (null);
+				Assert.Fail ("#1");
+			} catch (NullReferenceException ex) {} /*LAMEDOCS LAMEIMPL*/
 
 		}
+
+
+		[Test]
+		public void TryPostUnknownType ()
+		{
+			var p = new Port<int> ();
+			int tmp;
+
+			Assert.IsTrue (p.TryPostUnknownType (10), "#1");
+			Assert.AreEqual (1, p.ItemCount, "#2");
+			Assert.IsTrue (p.TryPostUnknownType (20), "#3");
+			Assert.AreEqual (2, p.ItemCount, "#4");
+			Assert.IsFalse (p.TryPostUnknownType ("oi"), "#5");
+			Assert.AreEqual (2, p.ItemCount, "#6");
+			try {
+				p.TryPostUnknownType (null);
+				Assert.Fail ("#7");
+			} catch (NullReferenceException ex) {} /*LAMEDOCS LAMEIMPL*/
+
+		}
+
 	}
 }

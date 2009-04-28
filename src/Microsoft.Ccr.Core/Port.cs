@@ -87,15 +87,29 @@ namespace Microsoft.Ccr.Core {
 		}
 		//IPort
 
+		public virtual void PostUnknownType (object item)
+		{
+			Post ((T)item);
+		}
+
 		void IPort.PostUnknownType (object item)
 		{
-			throw new NotImplementedException ();
+			this.PostUnknownType (item);
+		}
+
+		public virtual bool TryPostUnknownType (object item)
+		{
+			if (item == null)
+				throw new NullReferenceException ();
+			if (!(item is T))
+				return false;
+			Post ((T)item);
+			return true;
 		}
 
 		bool IPort.TryPostUnknownType (object item)
 		{
-			throw new NotImplementedException ();
-			return false;
+			return this.TryPostUnknownType (item);
 		}
 
 
@@ -173,6 +187,12 @@ namespace Microsoft.Ccr.Core {
 		void IPortReceive.UnregisterReceiver (ReceiverTask receiver)
 		{
 			this.UnregisterReceiver (receiver);
+		}
+
+
+		public virtual int ItemCount
+		{
+			get { lock (_lock) { return list.Count; } }
 		}
 
 		int IPortReceive.ItemCount

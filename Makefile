@@ -21,6 +21,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/IPortSet.cs \
 		src/Microsoft.Ccr.Core/ITask.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
+		src/Microsoft.Ccr.Core/PortNotFoundException.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
 		src/Microsoft.Ccr.Core/TaskExecutionPolicy.cs \
