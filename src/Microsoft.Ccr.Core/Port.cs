@@ -34,33 +34,17 @@ namespace Microsoft.Ccr.Core {
 	public class Port<T>: IPort, IPortReceive, IPortArbiterAccess
 	{
 		PortMode mode;
-		LinkedList<T> list = new LinkedList<T> ();
+		LinkedList<PortElement<T>> list = new LinkedList<PortElement<T>> ();
 		LinkedList<ReceiverTask> receivers = new LinkedList<ReceiverTask> ();
 		object _lock = new object ();
 		
-
 		public Port ()
 		{
-		
 		}
 
-		public virtual bool Test (out T item)
+		void Push (PortElement<T> elem)
 		{
 			lock (_lock) {
-				if (list.Count > 0) {
-					item = list.First.Value;
-					list.RemoveFirst ();
-					return true;
-				}
-				item = default (T);
-				return false;
-			}
-		}
-
-		public virtual void Post (T item)
-		{
-			lock (_lock) {
-				var elem = new PortElement<T> (item);
 				foreach (ReceiverTask rt in receivers) {
 					ITask task = null;
 					if (rt.Evaluate (elem, ref task)) {
@@ -73,10 +57,60 @@ namespace Microsoft.Ccr.Core {
 							receivers.Remove (rt);
 						return;
 					}
-
 				}
-				list.AddLast (item);
+
+				if (list.Count > 0) {
+					PortElement<T> first = list.First.Value;
+					PortElement<T> last = list.Last.Value;
+	
+					first.Previous = elem;
+					last.Next = elem;
+					elem.Next = first;
+					elem.Previous = last;
+				} else {
+					elem.Next = elem.Previous = elem;
+				}
+
+				list.AddLast (elem);
 			}
+		} 
+
+		PortElement<T> Pop ()
+		{
+			lock (_lock) {
+				if (list.Count > 0) {
+					PortElement<T> res = list.First.Value;
+					list.RemoveFirst ();
+
+					if (list.Count > 0) {
+						PortElement<T> first = list.First.Value;
+						PortElement<T> last = list.Last.Value;
+		
+						first.Previous = last;
+						last.Next = first;
+					}
+			
+					return res;
+				}
+			}
+			return null;
+		}
+
+
+		public virtual bool Test (out T item)
+		{
+			PortElement<T> res = Pop ();
+			if (res != null) {
+				item = res.TypedItem;
+				return true;
+			}
+			item = default (T);
+			return false;
+		}
+
+		public virtual void Post (T item)
+		{
+			Push (new PortElement<T> (item, this));
 		}
 
 		public override int GetHashCode ()
@@ -174,14 +208,8 @@ namespace Microsoft.Ccr.Core {
 
 		public virtual object Test ()
 		{
-			lock (_lock) {
-				if (list.Count > 0) {
-					object res = list.First.Value;
-					list.RemoveFirst ();
-					return res;
-				}
-				return null;
-			}
+			PortElement<T> res = Pop ();
+			return res == null ? null : res.Item;
 		}
 
 		object IPortReceive.Test ()
@@ -219,13 +247,12 @@ namespace Microsoft.Ccr.Core {
 
 		public void PostElement (IPortElement element)
 		{
-			throw new NotImplementedException ();
+			Push ((PortElement<T>)element);
 		}
 
 		public IPortElement TestForElement ()
 		{
-			throw new NotImplementedException ();
-			return null;
+			return Pop ();
 		}
 
 		public IPortElement[] TestForMultipleElements (int count)

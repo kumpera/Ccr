@@ -472,7 +472,6 @@ namespace Microsoft.Ccr.Core {
 				p.PostUnknownType (null);
 				Assert.Fail ("#1");
 			} catch (NullReferenceException ex) {} /*LAMEDOCS LAMEIMPL*/
-
 		}
 
 		[Test]
@@ -494,7 +493,6 @@ namespace Microsoft.Ccr.Core {
 
 		}
 
-
 		[Test]
 		public void Clear ()
 		{
@@ -507,6 +505,118 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (0, p.ItemCount, "#2");
 			p.Clear ();
 			Assert.AreEqual (0, p.ItemCount, "#3");
+		}
+
+		[Test]
+		public void PostElementBad ()
+		{
+			var p = new Port<int> ();
+;			var elem = new PortElement<double> (99);
+			try {
+				p.PostElement (elem);
+				Assert.Fail ("#1");
+			} catch (InvalidCastException) {} /*LAMEIMPL, stupid exception to throw*/
+			try {
+				p.PostElement (null);
+				Assert.Fail ("#2");
+			} catch (NullReferenceException) {} /*LAMEIMPL, stupid exception to throw*/
+
+		}
+
+		[Test]
+		public void PostElementThenTestForElement ()
+		{
+			int tmp;
+			var p = new Port<int> ();
+;			var elem = new PortElement<int> (99);
+			p.PostElement (elem);
+
+			Assert.AreEqual (1, p.ItemCount, "#1");
+			var res = p.TestForElement ();
+			Assert.AreEqual (elem, res, "#2");
+			Assert.AreEqual (0, p.ItemCount, "#3");
+			Assert.AreEqual (null, res.Owner, "#4");
+		}
+
+		[Test]
+		public void PostElementCausesLinking ()
+		{
+			var p = new Port<int> ();
+			p.Post (10);
+			p.PostElement (new PortElement<int> (20));
+			p.Post (30);
+
+			var r0 = p.TestForElement ();
+
+			var r1 = r0.Next;
+			Assert.IsNotNull (r1, "#1");
+			var r2 = r1.Next;
+			Assert.IsNotNull (r2, "#1");
+			Assert.AreEqual (r1, r2.Previous, "#2");
+			Assert.AreEqual (r2, r1.Previous, "#3");
+		}
+
+		[Test]
+		public void PostThenTestForElement ()
+		{
+			var p = new Port<int> ();
+			p.Post (33);
+			p.Post (44);
+
+			var res = p.TestForElement ();
+			Assert.IsNotNull (res, "#1");
+			Assert.IsNull (res.CausalityContext, "#1");
+			Assert.AreEqual (33, res.Item,  "#2");
+			Assert.IsNotNull (res.Next, "#3");
+			Assert.AreEqual (p, res.Owner, "#4");
+			Assert.AreEqual (res.Next, res.Previous, "#5");
+
+			Assert.IsTrue (res is IPortElement<int>,  "#6");
+			var typed = (IPortElement<int>)res;
+			Assert.AreEqual (33, typed.TypedItem, "#7");
+		}
+
+		[Test]
+		public void TestPortElementNextPropertyWithSinglePost ()
+		{
+			var p = new Port<int> ();
+			p.Post (33);
+			var res0 = p.TestForElement ();
+
+			Assert.AreEqual (res0, res0.Next, "#1");
+			Assert.AreEqual (res0, res0.Previous, "#2");
+		}
+
+		[Test]
+		public void TestPortElementNextProperty ()
+		{
+			var p = new Port<int> ();
+			p.Post (33);
+			p.Post (44);
+			p.Post (55);
+			p.Post (66);
+
+			var res0 = p.TestForElement ();
+			var res1 = res0.Next;
+			var res2 = res1.Next;
+			var res3 = res2.Next;
+
+			Assert.AreEqual (33, res0.Item, "#1");
+			Assert.AreEqual (res1, res0.Next, "#2");
+			Assert.AreEqual (res3, res0.Previous, "#12");
+
+			
+			Assert.AreEqual (44, res1.Item, "#3");
+			Assert.IsNotNull (res1.Next, "#4");
+			Assert.AreEqual (res3, res1.Previous, "#5");
+
+			Assert.AreEqual (55, res2.Item, "#6");
+			Assert.IsNotNull (res2.Next, "#7");
+			Assert.AreEqual (res1, res2.Previous, "#8");
+
+			Assert.AreEqual (66, res3.Item, "#9");
+			Assert.AreEqual (res1, res3.Next, "#10");
+			Assert.AreEqual (res2, res3.Previous, "#11");
 		}
 	}
 }
