@@ -262,14 +262,33 @@ namespace Microsoft.Ccr.Core {
 
 		public IPortElement[] TestForMultipleElements (int count)
 		{
-			throw new NotImplementedException ();
-			return null;
+			lock (_lock) {
+				if (list.Count < count)
+					return null;
+				var res = new IPortElement [count];
+				int idx = 0;
+				for (int i = 0; i < count; ++i) {
+					res [i] = list.First.Value;
+					res [i].Previous = list.Last.Value;
+					list.RemoveFirst ();
+				}
+
+				if (list.Count > 0) {
+					PortElement<T> first = list.First.Value;
+					PortElement<T> last = list.Last.Value;
+	
+					first.Previous = last;
+					last.Next = first;
+				}
+				return res;
+			}
 		}
 
 		public PortMode Mode
 		{
 			get { return mode; }
-			set { mode = value; throw new NotImplementedException (); }
+			[MonoTODO ("No optimization is done under OptimizedSingleReissueReceiver")]
+			set { mode = value; }
 		}
 	}
 }

@@ -639,5 +639,55 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreSame (a, items2 [0], "#5");
 		}
 
+		[Test]
+		public void TestForMultipleElements  ()
+		{
+			var p = new Port<int> ();
+			p.Post (33);
+			p.Post (55);
+			p.Post (44);
+
+			IPortElement[] res = p.TestForMultipleElements (2);
+
+			Assert.IsNotNull (res, "#1");
+			Assert.AreEqual (2, res.Length, "#2");
+			Assert.AreEqual (1, p.ItemCount, "#3");
+			Assert.AreEqual (33, res [0].Item, "#4");
+			Assert.AreEqual (55, res [1].Item, "#5");
+
+			res = p.TestForMultipleElements (2);
+
+			Assert.IsNull (res, "#6");
+			Assert.AreEqual (1, p.ItemCount, "#7");
+		}
+
+		[Test]
+		public void LinkStateAfterATestForMultipleElements ()
+		{
+			var p = new Port<int> ();
+			p.Post (33);
+			p.Post (55);
+			p.Post (44);
+			p.Post (77);
+
+
+			IPortElement[] res = p.TestForMultipleElements (2);
+			IPortElement a = res [0];
+			IPortElement b = res [1];
+			IPortElement c = (IPortElement)((IPortReceive)p).GetItems ()[0];
+			IPortElement d = (IPortElement)((IPortReceive)p).GetItems ()[1];
+	
+			Assert.AreEqual (b, a.Next, "#1");
+			Assert.AreEqual (c, b.Next, "#2");//LAMEIMPL MS doesn't unlink the resulting elements
+			Assert.AreEqual (d, c.Next, "#3");
+			Assert.AreEqual (c, d.Next, "#4");
+
+			Assert.AreEqual (d, a.Previous, "#5");
+			Assert.AreEqual (d, b.Previous, "#6"); //LAMEIMPL now this is SICK, previos always point to the last element
+			Assert.AreEqual (d, c.Previous, "#7");
+			Assert.AreEqual (c, d.Previous, "#8");
+
+		}
+
 	}
 }
