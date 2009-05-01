@@ -1,0 +1,3 @@
+This is an implementation of the ccr bits of MS's robotic SDK.
+Right now only the Microsoft.Ccr.Core.dll is been worked on.
+ 
