@@ -618,5 +618,26 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (res1, res3.Next, "#10");
 			Assert.AreEqual (res2, res3.Previous, "#11");
 		}
+
+		[Test]
+		public void TestGetItems ()
+		{
+			var p = new Port<int> ();
+			p.Post (33);
+			p.Post (55);
+
+			object[] items = ((IPortReceive)p).GetItems ();
+
+			Assert.IsNotNull (items, "#1");
+			Assert.AreEqual (2, items.Length, "#2");
+			Assert.IsTrue (items [0] is PortElement<int>, "#3");
+			PortElement<int> a = (PortElement<int>)items [0];
+			Assert.AreEqual (33, a.TypedItem, "#4");
+
+			//Check if they don't clone the elements
+			object[] items2 = ((IPortReceive)p).GetItems ();
+			Assert.AreSame (a, items2 [0], "#5");
+		}
+
 	}
 }

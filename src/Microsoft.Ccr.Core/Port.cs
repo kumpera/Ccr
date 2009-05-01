@@ -167,10 +167,15 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
-		[MonoTODO]
 		protected virtual object[] GetItems ()
 		{
-			return new object [0];
+			lock (_lock) {
+				object[] res = new object [list.Count];
+				int idx = 0;
+				foreach (var o in list)
+					res [idx++] = o;
+				return res;
+			}
 		}
 
 		object[] IPortReceive.GetItems ()
