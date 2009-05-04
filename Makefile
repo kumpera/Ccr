@@ -24,6 +24,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/PortNotFoundException.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
+		src/Microsoft.Ccr.Core/Tasks.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
 		src/Microsoft.Ccr.Core/TaskExecutionPolicy.cs \
 		src/Microsoft.Ccr.Core/Tuple.cs \
@@ -32,6 +33,8 @@ FILES = src/Assembly/AssemblyInfo.cs \
 TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/PortSetTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
+			 test/Microsoft.Ccr.Core/ReceiverTest.cs \
+			 test/Microsoft.Ccr.Core/TaskTest.cs \
 			 test/Microsoft.Ccr.Core.Arbiters/PortElementTest.cs \
 
 
