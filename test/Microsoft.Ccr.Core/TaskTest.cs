@@ -94,7 +94,95 @@ namespace Microsoft.Ccr.Core {
 				object f = tk [0];
 				Assert.Fail ("#3");
 			} catch (NotSupportedException) {}
+		}
+		[Test]
+		public void Task1PortElementCount ()
+		{
+			int cnt = 0;
+			var tk = new Task<int> ((a) => cnt += a);
+			Assert.AreEqual (1, tk.PortElementCount, "#1");
+			tk = new Task<int> (99, (a) => cnt += a);
+			Assert.AreEqual (1, tk.PortElementCount, "#2");
+		}
 
+		[Test]
+		public void Task1Execute ()
+		{
+			int cnt = 0;
+			var tk = new Task<int> ((a) => cnt += a);
+
+			try {
+				tk.Execute ();
+				Assert.Fail ("#1"); //no value at port 1
+			} catch (NullReferenceException) {}
+
+			var pe = new PortElement<int> (10);
+			tk [0] = pe;
+			tk.Execute ();
+			Assert.AreEqual (10, cnt, "#2");
+			Assert.AreEqual (pe, tk [0], "#3");
+
+			tk [0] = new PortElement<int> (2);
+			tk.Execute ();
+			Assert.AreEqual (12, cnt, "#3");
+		}
+
+		[Test]
+		public void Task1ExecuteWithBoundObject ()
+		{
+			int cnt = 0;
+			var tk = new Task<int> (5, (a) => cnt += a);
+			tk.Execute ();
+			Assert.AreEqual (5, cnt, "#1");
+			tk.Execute ();
+			Assert.AreEqual (10, cnt, "#2");
+
+			Assert.IsNotNull (tk [0], "#3");
+			tk [0] = new PortElement<int> (2);
+			tk.Execute ();
+			Assert.AreEqual (12, cnt, "#4");
+		}
+
+		[Test]
+		public void Task1SetInvalidItem ()
+		{
+			int cnt = 0;
+			var tk = new Task<int> ((a) => cnt += a);
+
+			try {
+				tk [1] = new PortElement<int> (2);
+				Assert.Fail ("#1");
+			} catch (ArgumentException) {} 
+
+			try {
+				var obj = tk [1];
+				Assert.Fail ("#2");
+			} catch (ArgumentException) {} 
+
+			try {
+				tk [0] = new PortElement<double> (2);
+				Assert.Fail ("#3");
+			} catch (InvalidCastException) {} //LAMEIMPL it should report a better error and take any IPortElement<T> 
+		}
+		
+		[Test]
+		public void Task1PartialCloneDoesntCloneArgument ()
+		{
+			int cnt = 0;
+			Handler<int> h = (a) => cnt += a;
+			PortElement<int> pe = new PortElement<int> (10);
+			var tk = new Task<int> (h);
+			tk [0] = pe;
+
+			ITask it = tk.PartialClone ();
+			Assert.IsTrue (it is Task<int>, "#1");
+
+			var tk2 = (Task<int>)it;
+			Assert.IsNull (tk2 [0], "#2");
+
+			tk = new Task<int> (99, h);
+			it = tk.PartialClone ();
+			Assert.IsNull (it [0], "#3");
 		}
 	}
 }

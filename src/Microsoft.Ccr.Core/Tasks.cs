@@ -72,6 +72,64 @@ namespace Microsoft.Ccr.Core {
 		}
 	}
 
+	public class Task<T0> : TaskCommon
+	{
+		protected PortElement<T0> Param0;
+		Handler<T0> handler;
 
+		public Task (T0 t0, Handler<T0> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+			this.handler = handler;
+			this.Param0 = new PortElement<T0> (t0);
+		}
+
+		public Task (Handler<T0> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+			this.handler = handler;
+		}
+
+		public override string ToString ()
+		{
+			return String.Format ("{0} with param0 {1}", typeof (Task<T0>), Param0);
+		}
+
+		[DebuggerStepThrough]
+		[DebuggerNonUserCode]
+		public override IEnumerator<ITask> Execute ()
+		{
+			handler (Param0.TypedItem);
+			return null;
+		}
+
+		public override ITask PartialClone ()
+		{
+			return new Task<T0> (this.handler);
+		}
+
+		public override IPortElement this [int index]
+		{
+			get
+			{
+				if (index != 0)
+					throw new ArgumentException ("index out of range", "index");
+				return Param0;
+			}
+			set
+			{
+				if (index != 0)
+					throw new ArgumentException ("index out of range", "index");
+				Param0 = (PortElement<T0>)value;
+			}
+		}
+
+		public override int PortElementCount
+		{
+			get { return 1; }
+		}
+	}
 
 }
