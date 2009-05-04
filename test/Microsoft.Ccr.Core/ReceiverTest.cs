@@ -297,6 +297,7 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (1, port.GetReceivers ().Length, "#2");
 			r.Cleanup ();
 			Assert.AreEqual (0, port.GetReceivers ().Length, "#3");
+			Assert.AreEqual (ReceiverTaskState.CleanedUp, r.State, "#4");
 		}
 	}
 }

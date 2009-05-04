@@ -54,6 +54,7 @@ namespace Microsoft.Ccr.Core {
 		public override void Cleanup ()
 		{
 			port.UnregisterReceiver (this);
+			base.Cleanup ();
 		}
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)

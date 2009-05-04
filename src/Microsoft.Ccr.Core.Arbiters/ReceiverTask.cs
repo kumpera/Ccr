@@ -48,7 +48,7 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 		public virtual void Cleanup ()
 		{
-			throw new NotImplementedException ();
+			State = ReceiverTaskState.CleanedUp;
 		}
 
 		public abstract void Cleanup (ITask taskToCleanup);
