@@ -27,8 +27,8 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Ccr.Core.Arbiters;
-
 namespace Microsoft.Ccr.Core {
 
 	public class Task : TaskCommon
@@ -42,6 +42,8 @@ namespace Microsoft.Ccr.Core {
 			this.handler = handler;
 		}
 
+		[DebuggerStepThrough]
+		[DebuggerNonUserCode]
 		public override IEnumerator<ITask> Execute ()
 		{
 			handler ();
@@ -69,4 +71,7 @@ namespace Microsoft.Ccr.Core {
 			get { return handler; }
 		}
 	}
+
+
+
 }
