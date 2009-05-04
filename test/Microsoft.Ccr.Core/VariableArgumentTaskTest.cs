@@ -127,5 +127,29 @@ namespace Microsoft.Ccr.Core {
 				Assert.Fail ("#4");
 			} catch (IndexOutOfRangeException) {} 
 		}
+
+		[Test]
+		public void PortElementCountWithBoundFirstArg ()
+		{
+			double cntA = 1;
+			int cntB = 1;
+			var task = new VariableArgumentTask<double, int> (1, (a, b) => { cntA += a; cntB += b.Length; });
+			Assert.AreEqual (2, task.PortElementCount, "#1");
+		}
+
+		[Test]
+		public void ExecuteWithBoundFirstArg ()
+		{
+			double cntA = 1;
+			int cntB = 1;
+			var task = new VariableArgumentTask<double, int> (1, (a, b) => { cntA += a; cntB += b.Length; });
+
+			task [0] = new PortElement <double> (4);
+			task [1] = new PortElement <int> (2);
+			Assert.IsNull (task.Execute (), "#1");
+			Assert.AreEqual (5, cntA, "#2");
+			Assert.AreEqual (2, cntB, "#3");
+
+		}
 	}
 }

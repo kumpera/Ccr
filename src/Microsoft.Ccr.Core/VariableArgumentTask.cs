@@ -74,6 +74,64 @@ namespace Microsoft.Ccr.Core {
 		public Handler ArbiterCleanupHandler { get; set; }
 		public Object LinkedIterator { get; set; }
 		public DispatcherQueue TaskQueue { get; set; }
-
 	}
+
+	public class VariableArgumentTask<T0, T> : ITask
+	{
+		PortElement<T0> Param0;
+		PortElement<T>[] data;
+		VariableArgumentHandler<T0, T> handler;
+
+		public VariableArgumentTask (int varArgSize, VariableArgumentHandler<T0, T> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+
+			this.data = new PortElement<T>[varArgSize];
+			this.handler = handler;
+		}
+	
+		public IEnumerator<ITask> Execute ()
+		{
+			T[] values = new T[data.Length];
+			for (int i = 0; i < data.Length; ++i)
+				values [i] = data[i].TypedItem;
+
+			handler (Param0.TypedItem, values);
+			return null; 
+		}
+
+		public ITask PartialClone ()
+		{
+			return new VariableArgumentTask<T0, T> (data.Length, handler);
+		}
+
+		public IPortElement this[int index]
+		{
+			get
+			{
+				if (index == 0)
+					return Param0;
+				return data [index - 1];
+			}
+			set
+			{
+				if (index == 0)
+					Param0 = (PortElement<T0>)value;
+				else
+					data [index - 1] = (PortElement<T>)value;
+			}
+		}
+
+		public int PortElementCount
+		{
+			get { return data.Length + 1; }
+		}
+
+		public Handler ArbiterCleanupHandler { get; set; }
+		public Object LinkedIterator { get; set; }
+		public DispatcherQueue TaskQueue { get; set; }
+	}
+
+
 }
