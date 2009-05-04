@@ -32,14 +32,18 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 	public abstract class ReceiverTask : TaskCommon
 	{
-		[MonoTODO]
 		protected ReceiverTask ()
 		{
 		}
 
-		[MonoTODO]
 		protected ReceiverTask (ITask taskToRun)
 		{
+			UserTask = taskToRun;
+		}
+
+		public override string ToString ()
+		{
+			return String.Format ("receiver {0} of task {1}", GetType (), UserTask);
 		}
 
 		public virtual void Cleanup ()
@@ -61,7 +65,6 @@ namespace Microsoft.Ccr.Core.Arbiters {
 		public override ITask PartialClone ()
 		{
 			throw new NotImplementedException ();
-			return null;
 		}
 
 		public override int PortElementCount
@@ -79,8 +82,8 @@ namespace Microsoft.Ccr.Core.Arbiters {
 			set { UserTask [index] = value; }
 		}
 
-
 		public ReceiverTaskState State { get; set; }
+		public Object ArbiterContext { get; set; }
 		public virtual IArbiterTask Arbiter { get; set; }
 		protected ITask UserTask { get; set; }	
 	}

@@ -34,12 +34,11 @@ namespace Microsoft.Ccr.Core {
 	{
 		IPortReceive port;
 		ITask task;
-		public Receiver (IPortReceive port, ITask task)
+		public Receiver (IPortReceive port, ITask task) : base (task)
 		{
 			if (port == null)
 				throw new ArgumentNullException ("port");
 			this.port = port;
-			UserTask = task;
 		}
 
 		public override void Cleanup (ITask taskToCleanup)
