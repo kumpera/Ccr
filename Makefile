@@ -28,6 +28,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
 		src/Microsoft.Ccr.Core/TaskExecutionPolicy.cs \
 		src/Microsoft.Ccr.Core/Tuple.cs \
+		src/Microsoft.Ccr.Core/VariableArgumentTask.cs \
 		src/MonoTODOAttribute.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
@@ -35,6 +36,7 @@ TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
 			 test/Microsoft.Ccr.Core/ReceiverTest.cs \
 			 test/Microsoft.Ccr.Core/TaskTest.cs \
+			 test/Microsoft.Ccr.Core/VariableArgumentTaskTest.cs \
 			 test/Microsoft.Ccr.Core.Arbiters/PortElementTest.cs \
 
 
