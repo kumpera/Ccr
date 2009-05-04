@@ -66,16 +66,22 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 		public override int PortElementCount
 		{
-			get { throw new NotImplementedException (); }
+			get
+			{
+				ITask t = UserTask;
+				return t == null ? 0 : t.PortElementCount;
+			}
 		}
 
 		public override IPortElement this[int index]
 		{
-			get { throw new NotImplementedException (); }
-			set { throw new NotImplementedException (); }
+			get { return UserTask [index]; }
+			set { UserTask [index] = value; }
 		}
 
 
 		public ReceiverTaskState State { get; set; }
+		public virtual IArbiterTask Arbiter { get; set; }
+		protected ITask UserTask { get; set; }	
 	}
 }

@@ -30,8 +30,18 @@ using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
-	public class Receiver :ReceiverTask
+	public class Receiver : ReceiverTask
 	{
+		IPortReceive port;
+		ITask task;
+		public Receiver (IPortReceive port, ITask task)
+		{
+			if (port == null)
+				throw new ArgumentNullException ("port");
+			this.port = port;
+			UserTask = task;
+		}
+
 		public override void Cleanup (ITask taskToCleanup)
 		{
 			throw new NotImplementedException ();
@@ -44,13 +54,31 @@ namespace Microsoft.Ccr.Core {
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
-			throw new NotImplementedException ();
-			return false;
+			ITask task = UserTask;
+			IArbiterTask arbiter = Arbiter;
+
+			task [0] = messageNode;
+			deferredTask = task;
+
+			if (arbiter != null && !arbiter.Evaluate (this, ref deferredTask))
+				return false;
+
+			return true;
+		}
+
+
+		public override IArbiterTask Arbiter
+		{
+			set { base.Arbiter = value; }
 		}
 	}
 	
-	public class Receiver<T> :Receiver
+	public class Receiver<T> : Receiver
 	{
+		public Receiver (IPortReceive port, ITask task) : base (port, task)
+		{
+		}
+
 	
 	}
 }

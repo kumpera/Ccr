@@ -32,9 +32,198 @@ using Microsoft.Ccr.Core.Arbiters;
 using NUnit.Framework;
 
 namespace Microsoft.Ccr.Core {
-
+	/*
+	TODO test the following things:
+		Evaluate
+			Under different States
+			Cleanup
+			LinkedInterator
+			Null task (with/out arbiter)
+		Execute
+		Consume
+		Cleanup
+	*/
 	[TestFixture]
 	public class ReceiverTest
 	{
+		public class TrivialArbiter : Task, IArbiterTask
+		{
+			bool res;
+			ITask task;
+
+			public TrivialArbiter (bool res) : base (() => {}) {
+				this.res = res;
+			}
+
+			public TrivialArbiter (bool res, ITask task) : base (() => {}) {
+				this.res = res;
+				this.task = task;
+			}
+
+			public bool Evaluate(ReceiverTask receiver, ref ITask deferredTask)
+			{
+				if (res && task != null)
+					deferredTask = task;
+				//Console.WriteLine ("EVALUATE {0} --- {1}", receiver, deferredTask);
+				return res;
+			}
+
+			public ArbiterTaskState ArbiterState { get { throw new NotImplementedException (); } }
+		}
+
+		public class ExposeUserTaskReceiver : Receiver
+		{
+			public ExposeUserTaskReceiver (IPortReceive port, ITask task) : base (port, task)
+			{
+			}
+
+			public ITask UserTask { get { return base.UserTask; } }
+		}
+
+		[Test]
+		[Category ("NotDotNet")]
+		public void BadCtor ()
+		{
+			Task t = new Task (() => {});
+			Port<int> p = new Port<int> ();
+			try {
+				new Receiver (null, t);
+				Assert.Fail ("#1");
+			} catch (ArgumentNullException) {}
+		}
+
+		[Test]
+		public void CtorResultingProperties ()
+		{
+			Task<int> t = new Task<int> ((a) => {});
+			Port<int> p = new Port<int> ();
+			ExposeUserTaskReceiver r = new ExposeUserTaskReceiver (p, t);
+
+			Assert.AreEqual (t, r.UserTask, "#1");
+			Assert.AreEqual (ReceiverTaskState.Onetime, r.State, "#2");
+			Assert.AreEqual (1, r.PortElementCount, "#3");
+		}
+
+		[Test]
+		public void CtorResultingPropertiesNullTask ()
+		{
+			Task<int> t = new Task<int> ((a) => {});
+			Port<int> p = new Port<int> ();
+			ExposeUserTaskReceiver r = new ExposeUserTaskReceiver (p, null);
+
+			Assert.IsNull (r.UserTask, "#1");
+			Assert.AreEqual (ReceiverTaskState.Onetime, r.State, "#2");
+			Assert.AreEqual (0, r.PortElementCount, "#3");
+		}
+
+		[Test]
+		public void IndexWithNoTask ()
+		{
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, null);	
+
+			var elem = new PortElement<int> (2);
+			try {
+				r [0] = elem;
+				Assert.Fail ("#1");
+			} catch (NullReferenceException) {}
+		}
+
+		[Test]
+		public void IndexManipulateTaskDirectly ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, task);	
+
+			var elem = new PortElement<int> (2);
+			task [0] = elem;
+
+			Assert.AreEqual (elem, r [0], "#1");
+			elem = new PortElement<int> (20);
+			r [0] = elem;
+			Assert.AreEqual (elem, r [0], "#2");
+
+			try {
+				r [0] = new PortElement <double> (2);
+				Assert.Fail ("#3");
+			} catch (InvalidCastException) {}
+		}
+
+		[Test]
+		public void EvaluateSimple ()
+		{
+			int cnt = 0;
+			Task<int> task = new Task<int> ((a) => cnt += a);
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, task);	
+
+			IPortElement portElem = new PortElement<int> (10);
+			ITask outTask = null;
+
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#1");
+			Assert.AreEqual (task, outTask, "#2");
+			Assert.AreEqual (portElem, r [0], "#3");
+		}	
+
+		[Test]
+		public void EvaluateWithArbiter ()
+		{
+			int cnt = 0;
+			Task<int> task = new Task<int> ((a) => cnt += a);
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, task);
+			r.Arbiter = new TrivialArbiter (false);
+
+			IPortElement portElem = new PortElement<int> (10);
+			ITask outTask = null;
+
+			Assert.IsFalse (r.Evaluate (portElem, ref outTask), "#1");
+			Assert.AreEqual (task, outTask, "#2");
+
+			r = new Receiver (port, task);
+			r.Arbiter = new TrivialArbiter (true);
+
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#3");
+			Assert.AreEqual (task, outTask, "#4");
+
+			//Test what happens if the arbiter set's the resulting task
+			Task<int> otherTask = new Task<int> ((a) => cnt = 99);
+			r = new Receiver (port, task);
+			r.Arbiter = new TrivialArbiter (true, otherTask);
+
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#5");
+			Assert.AreEqual (otherTask, outTask, "#6");
+		}
+
+		[Test]
+		public void UserTaskAfterEvaluate ()
+		{
+		
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			ExposeUserTaskReceiver r = new ExposeUserTaskReceiver (port, task);
+
+			IPortElement portElem = new PortElement<int> (10);
+			ITask outTask = null;
+
+			Assert.AreEqual (task, r.UserTask, "#1");
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#2");
+			Assert.AreEqual (task, outTask, "#3");
+			Assert.AreEqual (task, r.UserTask, "#4");
+		} 
+
+		[Test]
+		public void ArbiterCanBeSetManyTimes ()
+		{
+			//LAME DOCS/API The API is bulshiting us about that Arbiter can be set only once 
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, task);
+			r.Arbiter = new TrivialArbiter (false);
+			r.Arbiter = new TrivialArbiter (false);
+			((ReceiverTask)r).Arbiter = new TrivialArbiter (false);
+			((ReceiverTask)r).Arbiter = new TrivialArbiter (false);
+		}
 	}
 }
