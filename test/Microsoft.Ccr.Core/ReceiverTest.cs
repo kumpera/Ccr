@@ -225,5 +225,78 @@ namespace Microsoft.Ccr.Core {
 			((ReceiverTask)r).Arbiter = new TrivialArbiter (false);
 			((ReceiverTask)r).Arbiter = new TrivialArbiter (false);
 		}
+
+		class VoidDispatcherQueue : DispatcherQueue
+		{
+			public int queuedTasks;
+
+			public override bool Enqueue (ITask task)
+			{
+				++queuedTasks;
+				return true;
+			}
+		}
+
+		[Test]
+		public void PortRegisteringAsSideEffectOfSettingTheArbiter ()
+		{
+			IPortReceive port = new Port<int> ();
+			Receiver r = new Receiver (port, null);
+			var dq = new VoidDispatcherQueue ();
+			var arb = new TrivialArbiter (false);
+			arb.TaskQueue = dq;
+			r.Arbiter = arb;
+
+			Assert.AreEqual (1, port.GetReceivers ().Length, "#1"); //LAMEIMPL super weird behavior
+			Assert.AreEqual (arb, r.Arbiter, "#2");
+			Assert.AreEqual (dq, r.TaskQueue, "3");
+		}
+
+		[Test]
+		public void VerifyExecuteSideEffects ()
+		{
+			IPortReceive port = new Port<int> ();
+			Receiver r = new Receiver (port, null);
+			var dq = new VoidDispatcherQueue ();
+			var arb = new TrivialArbiter (false);
+			r.TaskQueue = dq;
+			r.Arbiter = arb;
+
+			Assert.AreEqual (1, port.GetReceivers ().Length, "#1"); //yeah, weird, look at previous test
+			Assert.AreEqual (arb, r.Arbiter, "#2");
+
+			r.Execute ();
+			Assert.AreEqual (2, port.GetReceivers ().Length, "#3");
+			Assert.AreEqual (r, port.GetReceivers () [0], "#4");
+			Assert.AreEqual (r, port.GetReceivers () [1], "#5");
+			Assert.IsNull (r.Arbiter, "#6");
+		}
+
+		[Test]
+		public void VerifyExecuteSideEffectsWithoutAnArbiter ()
+		{
+			IPortReceive port = new Port<int> ();
+			Receiver r = new Receiver (port, null);
+			var dq = new VoidDispatcherQueue ();
+			r.TaskQueue = dq;
+
+			Assert.AreEqual (0, port.GetReceivers ().Length, "#1");
+			Assert.IsNull (r.Execute (), "#2");
+			Assert.AreEqual (1, port.GetReceivers ().Length, "#3");
+			Assert.AreEqual (r, port.GetReceivers () [0], "#4");
+		}
+
+		[Test]
+		public void CleanupUnregisterReceiver ()
+		{
+			IPortReceive port = new Port<int> ();
+			Receiver r = new Receiver (port, null);
+			var dq = new VoidDispatcherQueue ();
+			r.TaskQueue = dq;
+			Assert.IsNull (r.Execute (), "#1");
+			Assert.AreEqual (1, port.GetReceivers ().Length, "#2");
+			r.Cleanup ();
+			Assert.AreEqual (0, port.GetReceivers ().Length, "#3");
+		}
 	}
 }

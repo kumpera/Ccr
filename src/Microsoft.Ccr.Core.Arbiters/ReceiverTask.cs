@@ -59,6 +59,7 @@ namespace Microsoft.Ccr.Core.Arbiters {
 
 		public override IEnumerator<ITask> Execute ()
 		{
+			Arbiter = null;
 			return null;
 		}
 

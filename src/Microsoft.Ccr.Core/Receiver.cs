@@ -51,6 +51,11 @@ namespace Microsoft.Ccr.Core {
 			throw new NotImplementedException ();
 		}
 
+		public override void Cleanup ()
+		{
+			port.UnregisterReceiver (this);
+		}
+
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
 			ITask task = UserTask;
@@ -65,10 +70,14 @@ namespace Microsoft.Ccr.Core {
 			return true;
 		}
 
-
 		public override IArbiterTask Arbiter
 		{
-			set { base.Arbiter = value; }
+			set {
+				base.Arbiter = value;
+				if (TaskQueue == null && value != null)
+					TaskQueue = value.TaskQueue;
+				port.RegisterReceiver (this);
+			}
 		}
 	}
 	

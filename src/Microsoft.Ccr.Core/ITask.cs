@@ -34,7 +34,7 @@ namespace Microsoft.Ccr.Core {
 	public interface ITask
 	{
 		IEnumerator<ITask> Execute ();
-		ITask PartialClone();
+		ITask PartialClone ();
 
 		Handler ArbiterCleanupHandler { get; set; }
 		IPortElement this[int index] { get; set; }
