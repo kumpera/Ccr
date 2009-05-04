@@ -132,4 +132,163 @@ namespace Microsoft.Ccr.Core {
 		}
 	}
 
+	public class Task<T0, T1> : TaskCommon
+	{
+		protected PortElement<T0> Param0;
+		protected PortElement<T1> Param1;
+
+		Handler<T0, T1> handler;
+
+		public Task (T0 t0, T1 t1, Handler<T0, T1> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+
+			this.handler = handler;
+			this.Param0 = new PortElement<T0> (t0);
+			this.Param1 = new PortElement<T1> (t1);
+		}
+
+		public Task (Handler<T0, T1> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+			this.handler = handler;
+		}
+
+		public override string ToString ()
+		{
+			return String.Format ("{0} with param0 {1} param1 {2}", typeof (Task<T0>), Param0, Param1);
+		}
+
+		[DebuggerStepThrough]
+		[DebuggerNonUserCode]
+		public override IEnumerator<ITask> Execute ()
+		{
+			handler (Param0.TypedItem, Param1.TypedItem);
+			return null;
+		}
+
+		public override ITask PartialClone ()
+		{
+			return new Task<T0, T1> (this.handler);
+		}
+
+		public override IPortElement this [int index]
+		{
+			get
+			{
+				switch (index) {
+				case 0:
+					return Param0;
+				case 1:
+					return Param1;
+				default:
+					throw new ArgumentException ("index out of range", "index");
+				}
+			}
+			set
+			{
+				switch (index) {
+				case 0:
+					Param0 = (PortElement<T0>)value;
+					break;
+				case 1:
+					Param1 = (PortElement<T1>)value;
+					break;
+				default:
+					throw new ArgumentException ("index out of range", "index");
+				}
+			}
+		}
+
+		public override int PortElementCount
+		{
+			get { return 2; }
+		}
+	}
+
+	public class Task<T0, T1, T2> : TaskCommon
+	{
+		protected PortElement<T0> Param0;
+		protected PortElement<T1> Param1;
+		protected PortElement<T2> Param2;
+
+		Handler<T0, T1, T2> handler;
+
+		public Task (T0 t0, T1 t1, T2 t2, Handler<T0, T1, T2> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+
+			this.handler = handler;
+			this.Param0 = new PortElement<T0> (t0);
+			this.Param1 = new PortElement<T1> (t1);
+			this.Param2 = new PortElement<T2> (t2);
+		}
+
+		public Task (Handler<T0, T1, T2> handler)
+		{
+			if (handler == null)
+				throw new ArgumentNullException ("handler");
+			this.handler = handler;
+		}
+
+		public override string ToString ()
+		{
+			return String.Format ("{0} with param0 {1} param1 {2} param2 {3}", typeof (Task<T0>), Param0, Param1, Param2);
+		}
+
+		[DebuggerStepThrough]
+		[DebuggerNonUserCode]
+		public override IEnumerator<ITask> Execute ()
+		{
+			handler (Param0.TypedItem, Param1.TypedItem, Param2.TypedItem);
+			return null;
+		}
+
+		public override ITask PartialClone ()
+		{
+			return new Task<T0, T1, T2> (this.handler);
+		}
+
+		public override IPortElement this [int index]
+		{
+			get
+			{
+				switch (index) {
+				case 0:
+					return Param0;
+				case 1:
+					return Param1;
+				case 2:
+					return Param2;
+				default:
+					throw new ArgumentException ("index out of range", "index");
+				}
+			}
+			set
+			{
+				switch (index) {
+				case 0:
+					Param0 = (PortElement<T0>)value;
+					break;
+				case 1:
+					Param1 = (PortElement<T1>)value;
+					break;
+				case 2:
+					Param2 = (PortElement<T2>)value;
+					break;
+				default:
+					throw new ArgumentException ("index out of range", "index");
+				}
+			}
+		}
+
+		public override int PortElementCount
+		{
+			get { return 3; }
+		}
+	}
+
 }
