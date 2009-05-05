@@ -514,5 +514,101 @@ namespace Microsoft.Ccr.Core {
 				Assert.Fail ("#1");
 			} catch (NullReferenceException) {}
 		}
+
+		[Test]
+		public void Receice1CtorSideEffects ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			Predicate<int> pred = (a) => a > 2;
+
+			var r = new Receiver<int> (port, pred, task);
+
+			Assert.AreEqual (pred, r.Predicate, "#1");
+		}
+
+		[Test]
+		public void PredicateEvaluate ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			int evals = 0;
+			Predicate<int> pred = (a) => { ++evals; return a > 10; };
+
+			var r = new Receiver<int> (port, pred, task);
+
+			ITask outTask = null;
+
+			Assert.IsFalse (r.Evaluate (new PortElement<int> (1), ref outTask), "#1");
+			Assert.AreEqual (1, evals, "#2");
+			Assert.IsNull (outTask, "#3");
+
+			Assert.IsTrue (r.Evaluate (new PortElement<int> (11), ref outTask), "#4");
+			Assert.AreEqual (2, evals, "#5");
+			Assert.IsNotNull (outTask, "#6");
+			Assert.IsNotNull (outTask [0], "#7");
+			Assert.AreEqual (11, outTask [0].Item, "#8");
+		}
+
+		[Test]
+		public void NullPredicateIsIgnoredDuringEvaluate ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+
+			var r = new Receiver<int> (port, null, task);
+
+			ITask outTask = null;
+
+			Assert.IsTrue (r.Evaluate (new PortElement<int> (1), ref outTask), "#1");
+			Assert.IsNotNull (outTask [0], "#2");
+			Assert.AreEqual (1, outTask [0].Item, "#3");
+		}
+
+
+		[Test]
+		public void PredicateIsCalledOnCleanedUpReceiver ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			int evals = 0;
+			Predicate<int> pred = (a) => { ++evals; return a > 10; };
+
+			var r = new Receiver<int> (port, pred, task);
+			r.Cleanup ();
+
+			ITask outTask = null;
+
+			Assert.IsFalse (r.Evaluate (new PortElement<int> (11), ref outTask), "#1");
+			Assert.AreEqual (1, evals, "#2");
+			Assert.IsNull (outTask, "#3");
+		}
+
+		[Test]
+		public void PredicateIsRanBeforeArbiterDuringEvaluate ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			int evals = 0;
+			Predicate<int> pred = (a) => { ++evals; return a > 10; };
+			TrivialArbiter arb = new TrivialArbiter (true);
+
+			var r = new Receiver<int> (port, pred, task);
+			r.Arbiter = arb;
+
+			ITask outTask = null;
+
+			Assert.IsFalse (r.Evaluate (new PortElement<int> (1), ref outTask), "#1");
+			Assert.AreEqual (1, evals, "#2");
+			Assert.IsFalse (arb.evaluateCalled, "#3");
+			Assert.IsNull (outTask, "#4");
+
+			Assert.IsTrue (r.Evaluate (new PortElement<int> (11), ref outTask), "#5");
+			Assert.AreEqual (2, evals, "#6");
+			Assert.IsTrue ( arb.evaluateCalled, "#7");
+			Assert.IsNotNull (outTask, "#8");
+			Assert.IsNotNull (outTask [0], "#9");
+			Assert.AreEqual (11, outTask [0].Item, "#10");
+		}
 	}
 }

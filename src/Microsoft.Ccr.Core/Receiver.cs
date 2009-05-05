@@ -99,8 +99,20 @@ namespace Microsoft.Ccr.Core {
 
 	public class Receiver<T> : Receiver
 	{
-		public Receiver (IPortReceive port, ITask task) : base (port, task)
+		public Receiver (IPortReceive port, Predicate<T> predicate, Task<T> task) : base (port, task)
 		{
+			Predicate = predicate;
 		}
+
+
+		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+		{
+			Predicate<T> pred = Predicate;
+			if (pred != null && !pred ((T)messageNode.Item))
+				return false;
+			return base.Evaluate (messageNode, ref deferredTask);
+		}
+
+		public Predicate<T> Predicate { get; set; }
 	}
 }
