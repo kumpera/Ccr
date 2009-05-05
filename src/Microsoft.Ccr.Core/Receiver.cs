@@ -34,11 +34,16 @@ namespace Microsoft.Ccr.Core {
 	{
 		IPortReceive port;
 		ITask task;
-		public Receiver (IPortReceive port, ITask task) : base (task)
+
+		public Receiver (IPortReceive port, ITask task) : this (false, port, task) {}
+
+		public Receiver (bool persist, IPortReceive port, ITask task) : base (task)
 		{
 			if (port == null)
 				throw new ArgumentNullException ("port");
 			this.port = port;
+			if (persist)
+				State = ReceiverTaskState.Persistent;
 		}
 
 		public override void Cleanup (ITask taskToCleanup)
@@ -61,6 +66,8 @@ namespace Microsoft.Ccr.Core {
 		{
 			ITask task = UserTask;
 			IArbiterTask arbiter = Arbiter;
+			if (State == ReceiverTaskState.Persistent)
+				task = task.PartialClone ();
 
 			task [0] = messageNode;
 			deferredTask = task;

@@ -35,13 +35,9 @@ namespace Microsoft.Ccr.Core {
 	/*
 	TODO test the following things:
 		Evaluate
-			Under different States
-			Cleanup
 			LinkedInterator
 			Null task (with/out arbiter)
-		Execute
 		Consume
-		Cleanup
 	*/
 	[TestFixture]
 	public class ReceiverTest
@@ -74,6 +70,9 @@ namespace Microsoft.Ccr.Core {
 		public class ExposeUserTaskReceiver : Receiver
 		{
 			public ExposeUserTaskReceiver (IPortReceive port, ITask task) : base (port, task)
+			{
+			}
+			public ExposeUserTaskReceiver (bool persist, IPortReceive port, ITask task) : base (persist, port, task)
 			{
 			}
 
@@ -114,6 +113,18 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsNull (r.UserTask, "#1");
 			Assert.AreEqual (ReceiverTaskState.Onetime, r.State, "#2");
 			Assert.AreEqual (0, r.PortElementCount, "#3");
+		}
+		[Test]
+
+		public void PersistentCtorResultingProperties ()
+		{
+			Task<int> t = new Task<int> ((a) => {});
+			Port<int> p = new Port<int> ();
+			ExposeUserTaskReceiver r = new ExposeUserTaskReceiver (true, p, t);
+
+			Assert.AreEqual (t, r.UserTask, "#1");
+			Assert.AreEqual (ReceiverTaskState.Persistent, r.State, "#2");
+			Assert.AreEqual (1, r.PortElementCount, "#3");
 		}
 
 		[Test]
@@ -162,7 +173,7 @@ namespace Microsoft.Ccr.Core {
 			ITask outTask = null;
 
 			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#1");
-			Assert.AreEqual (task, outTask, "#2");
+			Assert.AreEqual (task, outTask, "#2"); //outTask
 			Assert.AreEqual (portElem, r [0], "#3");
 		}	
 
@@ -194,12 +205,50 @@ namespace Microsoft.Ccr.Core {
 
 			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#5");
 			Assert.AreEqual (otherTask, outTask, "#6");
+			Assert.AreEqual (portElem, r [0], "#3");
+		}
+
+		public class RecordPartialCloneTask : Task<int>
+		{
+			public bool cloneCalled;
+
+			public RecordPartialCloneTask () : base ((A) => {}) {
+			}
+
+			public override ITask PartialClone ()
+			{
+				cloneCalled = true;
+				return base.PartialClone ();
+			}
+		}
+
+		[Test]
+		public void EvaluatePersistentReceiver ()
+		{
+			var task = new RecordPartialCloneTask ();
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (true, port, task);
+			var dq = new VoidDispatcherQueue ();
+			var arb = new TrivialArbiter (false);
+			arb.TaskQueue = dq;
+
+			IPortElement portElem = new PortElement<int> (10);
+			ITask outTask = null;
+
+			Assert.IsFalse (task.cloneCalled, "#1");
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#2");
+			Assert.IsTrue (task.cloneCalled, "#3");
+			Assert.AreNotEqual (task, outTask, "#4");
+			Assert.AreEqual (portElem, outTask [0], "#5");
+			Assert.IsNull (r [0], "#6");
+			Assert.IsNull (task [0], "#7");
+			Assert.IsNull (task.TaskQueue, "#8");
+
 		}
 
 		[Test]
 		public void UserTaskAfterEvaluate ()
 		{
-		
 			Task<int> task = new Task<int> ((a) => {});
 			Port<int> port = new Port<int> ();
 			ExposeUserTaskReceiver r = new ExposeUserTaskReceiver (port, task);
@@ -211,6 +260,7 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#2");
 			Assert.AreEqual (task, outTask, "#3");
 			Assert.AreEqual (task, r.UserTask, "#4");
+			Assert.AreEqual (portElem, r [0], "#5");
 		} 
 
 		[Test]
@@ -226,7 +276,7 @@ namespace Microsoft.Ccr.Core {
 			((ReceiverTask)r).Arbiter = new TrivialArbiter (false);
 		}
 
-		class VoidDispatcherQueue : DispatcherQueue
+		public class VoidDispatcherQueue : DispatcherQueue
 		{
 			public int queuedTasks;
 
