@@ -61,7 +61,260 @@ namespace Microsoft.Ccr.Core {
 
 			Assert.AreEqual ("dd", dq.Name, "#3");
 			Assert.AreEqual (disp, dq.Dispatcher, "#4");
-			
 		}
+
+		[Test]
+		public void PropertiesAfterZeroArgCtor ()
+		{
+			var dq = new DispatcherQueue ();
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.IsNotNull (dq.Name, "#3");
+			Assert.IsNull (dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsTrue (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (0, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (0, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.Unconstrained, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void PropertiesAfterTwoArgCtor ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (0, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (1, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.Unconstrained, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void PropertiesAfterFourArgDoubleCtor1 ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp, TaskExecutionPolicy.Unconstrained, 20.0);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (0, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (20, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.Unconstrained, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void PropertiesAfterFourArgDoubleCtor2 ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainSchedulingRateThrottleExecution, 20.0);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (0, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (20, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.ConstrainSchedulingRateThrottleExecution, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void PropertiesAfterFourArgDoubleCtor3 ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 20.0);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (0, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (20, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void BadFourArgDoubleCtor ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks, 10.0);
+				Assert.Fail ("#1");
+			} catch (ArgumentException) {}
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution, 10.0);
+				Assert.Fail ("#2");
+			} catch (ArgumentException) {}
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.Unconstrained, 0.0);
+			} catch (ArgumentException) { Assert.Fail ("#3"); }
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 0.0);
+				Assert.Fail ("#4");
+			} catch (ArgumentException) {}
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, -1.1);
+				Assert.Fail ("#5");
+			} catch (ArgumentException) {}
+		}
+
+		[Test]
+		public void PropertiesAfterFourArgIntCtor1 ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp, TaskExecutionPolicy.Unconstrained, 20);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (20, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (0, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.Unconstrained, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void PropertiesAfterFourArgIntCtor2 ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks, 20);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (20, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (0, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void PropertiesAfterFourArgIntCtor3 ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			var dq = new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution, 20);
+
+			Assert.AreEqual (0, dq.Count, "#1");
+			Assert.AreEqual (0, dq.CurrentSchedulingRate, "#2");
+			Assert.AreEqual ("dd", dq.Name, "#3");
+			Assert.AreEqual (disp, dq.Dispatcher, "#4");
+			Assert.IsNull (dq.ExecutionPolicyNotificationPort, "#5");
+			Assert.IsFalse (dq.IsDisposed, "#6");
+			Assert.IsFalse (dq.IsSuspended, "#7");
+			Assert.IsFalse (dq.IsUsingThreadPool, "#8");
+			Assert.AreEqual (20, dq.MaximumQueueDepth, "#9");
+			Assert.AreEqual (0, dq.MaximumSchedulingRate, "#10");
+			Assert.AreEqual (TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution, dq.Policy, "#11");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#12");
+			/*default is 10ms*/
+			Assert.AreEqual (new TimeSpan (0,0,0,0,10), dq.ThrottlingSleepInterval, "#13");
+			Assert.AreEqual (1, dq.Timescale, "#14");
+			Assert.IsNull (dq.UnhandledExceptionPort, "#15");
+		}
+
+		[Test]
+		public void BadFourArgIntCtor ()
+		{
+			Dispatcher disp = new Dispatcher ();
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 10);
+				Assert.Fail ("#1");
+			} catch (ArgumentException) {}
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainSchedulingRateThrottleExecution, 10);
+				Assert.Fail ("#2");
+			} catch (ArgumentException) {}
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.Unconstrained, 0);
+			} catch (ArgumentException) { Assert.Fail ("#3"); }
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution, 0);
+				Assert.Fail ("#4");
+			} catch (ArgumentException) {}
+
+			try {
+				new DispatcherQueue ("dd", disp, TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution, -10);
+				Assert.Fail ("#4");
+			} catch (ArgumentException) {}
+		}
+
+
+
+
+
 	}
 }

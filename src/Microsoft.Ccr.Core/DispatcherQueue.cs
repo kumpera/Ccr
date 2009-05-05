@@ -26,31 +26,123 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Xml.Serialization;
 
 namespace Microsoft.Ccr.Core {
 
-	public class DispatcherQueue
+	public class DispatcherQueue : IDisposable
 	{
 		Dispatcher dispatcher;
+		bool suspended;
 
-		public DispatcherQueue ()
+
+		void ConfigureDefaults ()
 		{
-			Name = "Unnamed queue using Threadpool";
+			ThrottlingSleepInterval = new TimeSpan (0,0,0,0,10);
+			Timescale = 1;
 		}
 
-		public DispatcherQueue (string name, Dispatcher dispatcher)
+		DispatcherQueue (string name, Dispatcher dispatcher, TaskExecutionPolicy policy)
 		{
 			if (name == null)
 				throw new ArgumentNullException ("name");
+
 			if (dispatcher == null)
 				throw new ArgumentNullException ("dispatcher");
 
-			Name = name;
 			this.dispatcher = dispatcher;
+
+			Name = name;
+
+			ThrottlingSleepInterval = new TimeSpan (0,0,0,0,10);
+			Timescale = 1;
+	
+			Policy = policy;
+			//MaximumSchedulingRate = 1;
 		}
 
+		public DispatcherQueue () : this ("Unnamed queue using Threadpool") {}
+
+		public DispatcherQueue (string name) {
+			if (name == null)
+				throw new ArgumentNullException ("name");
+
+			Name = name;
+			ThrottlingSleepInterval = new TimeSpan (0,0,0,0,10);
+			Timescale = 1;
+			IsUsingThreadPool = true;
+		}
+
+		public DispatcherQueue (string name, Dispatcher dispatcher) : this (name, dispatcher, TaskExecutionPolicy.Unconstrained)
+		{
+			MaximumSchedulingRate = 1;
+		} 
+
+		public DispatcherQueue(string name, Dispatcher dispatcher, TaskExecutionPolicy policy, int maximumQueueDepth) : this (name, dispatcher, policy) 
+		{
+			if (policy == TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks || policy == TaskExecutionPolicy.ConstrainSchedulingRateThrottleExecution)
+				throw new ArgumentException ("schedulingRate");
+			if (maximumQueueDepth < 1 && policy != TaskExecutionPolicy.Unconstrained)
+				throw new ArgumentException ("maximumQueueDepth");
+
+			MaximumQueueDepth = maximumQueueDepth;
+		}
+
+		public DispatcherQueue (string name, Dispatcher dispatcher, TaskExecutionPolicy policy, double schedulingRate) : this (name, dispatcher, policy)
+		{
+			if (policy == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks || policy == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution)
+				throw new ArgumentException ("maximumQueueDepth");
+			if (schedulingRate < 1 && policy != TaskExecutionPolicy.Unconstrained)
+				throw new ArgumentException ("schedulingRate");
+
+			MaximumSchedulingRate = schedulingRate;
+		}
+
+		~DispatcherQueue ()
+		{
+			Dispose (false);
+		}
+
+		public void Dispose ()
+		{
+			Dispose (true);
+		}
+
+		protected virtual void Dispose (bool disposing)
+		{
+			IsDisposed = true;
+			if (disposing)
+				GC.SuppressFinalize (this);
+		}
+
+		public int Count { get; set; }
+		public double CurrentSchedulingRate { get; set; }
 		public string Name { get; set; }
 
+		[XmlIgnoreAttribute]
+		public Port<ITask> ExecutionPolicyNotificationPort { get; set; }
+		
+		[MonoTODO ("having a setter is VERY weird, must test behavior")]
+		public bool IsDisposed { get; set; }
+
+		public bool IsSuspended
+		{
+			get { return suspended; }
+		}
+
+		public bool IsUsingThreadPool { get; set; }
+		public int MaximumQueueDepth { get; set; }
+		public double MaximumSchedulingRate { get; set; }
+		public TaskExecutionPolicy Policy { get; set; }
+		public long ScheduledTaskCount { get; set; }
+
+		[XmlIgnoreAttribute]
+		public TimeSpan ThrottlingSleepInterval { get; set; }
+
+		public double Timescale { get; set; }
+		public Port<Exception> UnhandledExceptionPort { get; set; }
+
+		[XmlIgnoreAttribute]
 		public Dispatcher Dispatcher
 		{
 			get { return dispatcher; }
