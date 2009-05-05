@@ -190,7 +190,47 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#1");
 			Assert.AreEqual (task, outTask, "#2"); //outTask
 			Assert.AreEqual (portElem, r [0], "#3");
-		}	
+		}
+
+
+		[Test]
+		public void EvaluateAfterCleanup ()
+		{
+			int cnt = 0;
+			Task<int> task = new Task<int> ((a) => cnt += a);
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, task);
+			r.Cleanup ();	
+
+			IPortElement portElem = new PortElement<int> (10);
+			ITask outTask = null;
+
+			Assert.IsFalse (r.Evaluate (portElem, ref outTask), "#1");
+			Assert.IsNull (outTask, "#2");
+			Assert.IsNull (r [0], "#3");
+		}
+
+
+		[Test]
+		public void EvaluateAfterCleanupWithArbiter ()
+		{
+			int cnt = 0;
+			Task<int> task = new Task<int> ((a) => cnt += a);
+			Port<int> port = new Port<int> ();
+			var arb = new TrivialArbiter (false);
+			Receiver r = new Receiver (port, task);
+			r.Arbiter = arb;
+
+			r.Cleanup ();	
+
+			IPortElement portElem = new PortElement<int> (10);
+			ITask outTask = null;
+
+			Assert.IsFalse (r.Evaluate (portElem, ref outTask), "#1");
+			Assert.IsNull (outTask, "#2");
+			Assert.IsNull (r [0], "#3");
+			Assert.IsFalse (arb.evaluateCalled, "#4");
+		}
 
 		[Test]
 		public void EvaluateWithArbiter ()

@@ -68,6 +68,8 @@ namespace Microsoft.Ccr.Core {
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
+			if (State == ReceiverTaskState.CleanedUp)
+				return false;
 			ITask task = UserTask;
 			IArbiterTask arbiter = Arbiter;
 			if (task != null) {
