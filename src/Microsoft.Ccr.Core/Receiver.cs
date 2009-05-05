@@ -48,7 +48,7 @@ namespace Microsoft.Ccr.Core {
 
 		public override void Cleanup (ITask taskToCleanup)
 		{
-			throw new NotImplementedException ();
+			((IPortArbiterAccess)port).PostElement (taskToCleanup [0]);
 		}
 
 		public override void Consume (IPortElement item)

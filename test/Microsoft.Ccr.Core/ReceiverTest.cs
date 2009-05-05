@@ -367,5 +367,27 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (0, port.GetReceivers ().Length, "#3");
 			Assert.AreEqual (ReceiverTaskState.CleanedUp, r.State, "#4");
 		}
+
+		[Test]
+		public void CleanupTask ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (port, task);
+
+			IPortElement portElem = new PortElement<int> (10);
+			Task<int> other = new Task<int> ((a) => {});
+			other [0] = portElem;
+
+			Assert.AreEqual (0, port.ItemCount, "#1");
+			r.Cleanup (other);
+			Assert.AreEqual (1, port.ItemCount, "#2");
+
+			other = new Task<int> ((a) => {});
+			try {
+				r.Cleanup (other); //Port will fail due to null PortElement
+				Assert.Fail ("#3");
+			} catch (NullReferenceException) {}
+		}
 	}
 }
