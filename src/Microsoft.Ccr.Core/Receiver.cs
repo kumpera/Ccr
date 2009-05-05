@@ -66,10 +66,11 @@ namespace Microsoft.Ccr.Core {
 		{
 			ITask task = UserTask;
 			IArbiterTask arbiter = Arbiter;
-			if (State == ReceiverTaskState.Persistent)
-				task = task.PartialClone ();
-
-			task [0] = messageNode;
+			if (task != null) {
+				if (State == ReceiverTaskState.Persistent)
+					task = task.PartialClone ();
+				task [0] = messageNode;
+			}
 			deferredTask = task;
 
 			if (arbiter != null && !arbiter.Evaluate (this, ref deferredTask))

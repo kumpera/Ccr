@@ -243,7 +243,25 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsNull (r [0], "#6");
 			Assert.IsNull (task [0], "#7");
 			Assert.IsNull (task.TaskQueue, "#8");
+		}
 
+		[Test]
+		public void ReceiverWithNullTask ()
+		{
+			Port<int> port = new Port<int> ();
+			Receiver r = new Receiver (false, port, null);
+
+			IPortElement portElem = new PortElement<int> (10);
+
+			ITask outTask = null;
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#1");
+			Assert.IsNull (outTask, "#2");
+
+			r = new Receiver (true, port, null);
+			outTask = null;
+			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#3");
+			Assert.IsNull (outTask, "#4");
+			
 		}
 
 		[Test]
