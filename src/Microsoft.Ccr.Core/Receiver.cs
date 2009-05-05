@@ -104,6 +104,10 @@ namespace Microsoft.Ccr.Core {
 			Predicate = predicate;
 		}
 
+		public Receiver (bool persist, IPortReceive port, Predicate<T> predicate, Task<T> task) : base (persist, port, task)
+		{
+			Predicate = predicate;
+		}
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
