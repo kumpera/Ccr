@@ -34,10 +34,10 @@ using NUnit.Framework;
 namespace Microsoft.Ccr.Core {
 	/*
 	TODO test the following things:
-		Evaluate
+		Evaluate/Consume
 			LinkedInterator
-			Null task (with/out arbiter)
-		Consume
+			ArbiterCleanupHandler
+			
 	*/
 	[TestFixture]
 	public class ReceiverTest
@@ -46,6 +46,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			bool res;
 			ITask task;
+			public bool evaluateCalled;
 
 			public TrivialArbiter (bool res) : base (() => {}) {
 				this.res = res;
@@ -60,6 +61,7 @@ namespace Microsoft.Ccr.Core {
 			{
 				if (res && task != null)
 					deferredTask = task;
+				evaluateCalled = true;
 				//Console.WriteLine ("EVALUATE {0} --- {1}", receiver, deferredTask);
 				return res;
 			}
@@ -77,6 +79,19 @@ namespace Microsoft.Ccr.Core {
 			}
 
 			public ITask UserTask { get { return base.UserTask; } }
+		}
+
+		public class VoidDispatcherQueue : DispatcherQueue
+		{
+			public int queuedTasks;
+			public ITask lastQueuedTask;
+
+			public override bool Enqueue (ITask task)
+			{
+				++queuedTasks;
+				lastQueuedTask = task;
+				return true;
+			}
 		}
 
 		[Test]
@@ -183,20 +198,26 @@ namespace Microsoft.Ccr.Core {
 			int cnt = 0;
 			Task<int> task = new Task<int> ((a) => cnt += a);
 			Port<int> port = new Port<int> ();
+			var arb = new TrivialArbiter (false);
 			Receiver r = new Receiver (port, task);
-			r.Arbiter = new TrivialArbiter (false);
+			r.Arbiter = arb;
 
 			IPortElement portElem = new PortElement<int> (10);
 			ITask outTask = null;
 
+			Assert.IsFalse (arb.evaluateCalled, "#8");
 			Assert.IsFalse (r.Evaluate (portElem, ref outTask), "#1");
 			Assert.AreEqual (task, outTask, "#2");
+			Assert.IsTrue (arb.evaluateCalled, "#9");
 
 			r = new Receiver (port, task);
-			r.Arbiter = new TrivialArbiter (true);
+			r.Arbiter = arb =  new TrivialArbiter (true);
+
+			Assert.IsFalse (arb.evaluateCalled, "#10");
 
 			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#3");
 			Assert.AreEqual (task, outTask, "#4");
+			Assert.IsTrue (arb.evaluateCalled, "#11");
 
 			//Test what happens if the arbiter set's the resulting task
 			Task<int> otherTask = new Task<int> ((a) => cnt = 99);
@@ -205,7 +226,7 @@ namespace Microsoft.Ccr.Core {
 
 			Assert.IsTrue (r.Evaluate (portElem, ref outTask), "#5");
 			Assert.AreEqual (otherTask, outTask, "#6");
-			Assert.AreEqual (portElem, r [0], "#3");
+			Assert.AreEqual (portElem, r [0], "#7");
 		}
 
 		public class RecordPartialCloneTask : Task<int>
@@ -294,17 +315,6 @@ namespace Microsoft.Ccr.Core {
 			((ReceiverTask)r).Arbiter = new TrivialArbiter (false);
 		}
 
-		public class VoidDispatcherQueue : DispatcherQueue
-		{
-			public int queuedTasks;
-
-			public override bool Enqueue (ITask task)
-			{
-				++queuedTasks;
-				return true;
-			}
-		}
-
 		[Test]
 		public void PortRegisteringAsSideEffectOfSettingTheArbiter ()
 		{
@@ -387,6 +397,81 @@ namespace Microsoft.Ccr.Core {
 			try {
 				r.Cleanup (other); //Port will fail due to null PortElement
 				Assert.Fail ("#3");
+			} catch (NullReferenceException) {}
+		}
+
+		[Test]
+		public void SimpleConsume ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			var dq = new VoidDispatcherQueue ();
+
+			Receiver r = new Receiver (port, task);
+			r.TaskQueue = dq;
+
+			IPortElement portElem = new PortElement<int> (10);
+
+			r.Consume (portElem);
+			Assert.AreEqual (1, dq.queuedTasks, "#1");
+			Assert.AreNotEqual (task, dq.lastQueuedTask, "#2"); //cloned
+			Assert.AreEqual (portElem, dq.lastQueuedTask [0], "#3");
+			Assert.AreNotEqual (portElem, task [0], "#4");
+		}
+
+		[Test]
+		public void ConsumeAfterCleanup ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			var dq = new VoidDispatcherQueue ();
+
+			Receiver r = new Receiver (port, task);
+			r.TaskQueue = dq;
+			r.Cleanup ();
+
+			IPortElement portElem = new PortElement<int> (10);
+
+			r.Consume (portElem);
+			Assert.AreEqual (0, dq.queuedTasks, "#1");
+			Assert.IsNull (r [0], "#2");
+		}
+
+		[Test]
+		public void ConsumeIgnoredArbiter ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+			var dq = new VoidDispatcherQueue ();
+			var arb = new TrivialArbiter (false);
+
+			Receiver r = new Receiver (port, task);
+
+			r.TaskQueue = dq;
+			r.Arbiter = arb;
+
+			IPortElement portElem = new PortElement<int> (10);
+
+			r.Consume (portElem);
+			Assert.AreEqual (1, dq.queuedTasks, "#1");
+			Assert.AreNotEqual (task, dq.lastQueuedTask, "#2");
+			Assert.AreEqual (portElem, dq.lastQueuedTask [0], "#3");
+			Assert.IsFalse (arb.evaluateCalled, "#3");
+		}
+
+		[Test]
+		public void ConsumeFailsWithoutTaskQueue ()
+		{
+			Task<int> task = new Task<int> ((a) => {});
+			Port<int> port = new Port<int> ();
+
+			Receiver r = new Receiver (port, task);
+
+			IPortElement portElem = new PortElement<int> (10);
+
+			try {
+				r.Consume (portElem);
+				Assert.Fail ("#1");
 			} catch (NullReferenceException) {}
 		}
 	}

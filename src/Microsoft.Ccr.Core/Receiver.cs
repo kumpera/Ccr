@@ -53,7 +53,11 @@ namespace Microsoft.Ccr.Core {
 
 		public override void Consume (IPortElement item)
 		{
-			throw new NotImplementedException ();
+			if (State == ReceiverTaskState.CleanedUp)
+				return;
+			ITask res = UserTask.PartialClone ();
+			res [0] = item;
+			TaskQueue.Enqueue (res);
 		}
 
 		public override void Cleanup ()
@@ -89,13 +93,12 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 	}
-	
+
+
 	public class Receiver<T> : Receiver
 	{
 		public Receiver (IPortReceive port, ITask task) : base (port, task)
 		{
 		}
-
-	
 	}
 }
