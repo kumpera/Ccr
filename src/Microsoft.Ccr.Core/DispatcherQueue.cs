@@ -113,13 +113,25 @@ namespace Microsoft.Ccr.Core {
 				GC.SuppressFinalize (this);
 		}
 
+		void DispatchTask (ITask task)
+		{
+			try {
+				if (task.Execute () != null)
+					throw new Exception ("Iterative tasks not supported");
+			} catch (Exception e) {
+				if (UnhandledException != null)
+					UnhandledException (this, new UnhandledExceptionEventArgs (e, false));
+			}
+		}
+
 		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
 		public virtual bool Enqueue (ITask task)
 		{
 			if (dispatcher == null) {
-				Handler x = () => task.Execute ();
+				Handler<ITask> x = DispatchTask;
+				
 				++scheduledItems;
-				return x.BeginInvoke (null, null) != null;
+				return x.BeginInvoke (task, null, null) != null;
 			} else
 				throw new NotImplementedException ();
 		}
@@ -180,5 +192,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			get { return dispatcher; }
 		}
+
+		public event UnhandledExceptionEventHandler UnhandledException;
 	}
 }

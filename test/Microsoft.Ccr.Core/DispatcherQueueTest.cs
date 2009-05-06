@@ -425,5 +425,51 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsFalse (dq.IsSuspended, "#3");
 			
 		}
+
+		[Test]
+		public void TaskExceptionsPostOnTheUnhandledExceptionEvent ()
+		{
+			AutoResetEvent evt = new AutoResetEvent (false);
+			int count = 0;
+			object obj = null; 
+			Exception origException = null;
+			UnhandledExceptionEventArgs args = null;
+			bool wasTPThread = false;
+
+			Task t = new Task(() => { origException = new Exception ("hello"); throw origException; });
+			
+			DispatcherQueue dq = new DispatcherQueue ();
+			dq.UnhandledException += (_obj, _args) => {
+				++count;
+				obj = _obj;
+				args = _args;
+				wasTPThread = Thread.CurrentThread.IsThreadPoolThread;
+				evt.Set ();
+			};
+			Assert.IsTrue (dq.Enqueue (t), "#1");
+			Assert.IsTrue (evt.WaitOne (5000, false), "#2");
+
+			Assert.AreEqual (1, count, "#3");
+			Assert.AreEqual (dq, obj, "#4");
+			Assert.AreEqual (origException, args.ExceptionObject, "#5");
+			Assert.IsFalse (args.IsTerminating, "#6");
+			Assert.IsTrue (wasTPThread, "#7");
+		}
+
+		[Test]
+		public void TaskExceptionDontBlowUpIfNoEventIsRegistered ()
+		{
+			AutoResetEvent evt = new AutoResetEvent (false);
+			int count = 0;
+			object obj = null; 
+			Exception origException = null;
+			UnhandledExceptionEventArgs args = null;
+			bool wasTPThread = false;
+
+			Task t = new Task(() => { origException = new Exception ("hello"); throw origException; });
+			
+			DispatcherQueue dq = new DispatcherQueue ();
+			Assert.IsTrue (dq.Enqueue (t), "#1");
+		}
 	}
 }
