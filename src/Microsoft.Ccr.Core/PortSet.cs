@@ -31,8 +31,75 @@ using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
-	/*public class PortSet : IPortSet, IPort
+	public class PortSet : IPortSet, IPort
 	{
+		protected PortSetMode ModeInternal;
+		protected IPort[] PortsTable;
+		[MonoTODO ("add support for shared port mode")]
+		protected Port<Object> SharedPortInternal;
+		protected Type[] Types;
 
-	}*/
+		protected PortSet ()
+		{
+		}
+
+		public PortSet (Type[] types)
+		{
+			if (types == null)
+				throw new ArgumentNullException ("types");
+			if (types.Length == 0)
+				throw new ArgumentOutOfRangeException ("types");
+			foreach (var t in types)
+				if (t == null)
+					throw new ArgumentNullException ("types");
+
+			this.Types = types;
+			this.PortsTable = new IPort [types.Length];
+			for (int i = 0; i < types.Length; ++i)
+				this.PortsTable[i] = (IPort)Activator.CreateInstance (typeof (Port<>).MakeGenericType (types [i]));
+		}
+
+		public void PostUnknownType (object item)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public bool TryPostUnknownType (object item)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public T Test<T> ()
+		{
+			throw new NotImplementedException ();
+		}
+
+		public IPort this[Type portItemType]
+		{
+			get
+			{
+				for (int i = 0; i < Types.Length; ++i)
+					if (Types [i] == portItemType)
+						return PortsTable [i];
+				return null;
+			}
+		}
+
+		public PortSetMode Mode
+		{
+			get { return ModeInternal; }
+			set { ModeInternal = value; }
+		}
+
+		public ICollection<IPort> Ports
+		{
+			get { return Array.AsReadOnly (PortsTable); }
+		}
+
+		public Port<Object> SharedPort
+		{
+			get { return SharedPortInternal; }
+		}
+
+	}
 }
