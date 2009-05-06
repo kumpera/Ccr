@@ -27,6 +27,7 @@
 //
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Microsoft.Ccr.Core.Arbiters;
 
 using NUnit.Framework;
@@ -189,10 +190,12 @@ namespace Microsoft.Ccr.Core {
 		class VoidDispatcherQueue : DispatcherQueue
 		{
 			public int queuedTasks;
+			public ITask lastQueuedTask;
 
 			public override bool Enqueue (ITask task)
 			{
 				++queuedTasks;
+				lastQueuedTask = task;
 				return true;
 			}
 		}
@@ -686,8 +689,79 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (d, b.Previous, "#6"); //LAMEIMPL now this is SICK, previos always point to the last element
 			Assert.AreEqual (d, c.Previous, "#7");
 			Assert.AreEqual (c, d.Previous, "#8");
+		}
+		
+		[Test]
+		public void PostElementPrependOnTheQueue ()
+		{
+			Port<int> p = new Port<int> ();
 
+			p.Post (10);
+			p.Post (20);
+			p.PostElement (new PortElement<int> (30));
+
+			Assert.AreEqual (30, (int)p, "#1");
+			Assert.AreEqual (10, (int)p, "#2");
+			Assert.AreEqual (20, (int)p, "#3");
 		}
 
+		[Test]
+		public void LinkStateAfterPostElement ()
+		{
+			Port<int> p = new Port<int> ();
+
+			p.Post (10);
+			p.Post (20);
+			p.PostElement (new PortElement<int> (30));
+			p.PostElement (new PortElement<int> (40));
+
+			IPortReceive rec = p;
+			IPortElement a = (IPortElement)rec.GetItems () [0];
+			IPortElement b = (IPortElement)rec.GetItems () [1];
+			IPortElement c = (IPortElement)rec.GetItems () [2];
+			IPortElement d = (IPortElement)rec.GetItems () [3];
+
+
+			Assert.AreEqual (b, a.Next, "#1");
+			Assert.AreEqual (c, b.Next, "#2");
+			Assert.AreEqual (d, c.Next, "#3");
+			Assert.AreEqual (a, d.Next, "#4");
+
+			Assert.AreEqual (d, a.Previous, "#5");
+			Assert.AreEqual (a, b.Previous, "#6");
+			Assert.AreEqual (b, c.Previous, "#7");
+			Assert.AreEqual (c, d.Previous, "#8");
+
+			Assert.AreEqual (40, a.Item, "#9");
+			Assert.AreEqual (30, b.Item, "#10");
+			Assert.AreEqual (10, c.Item, "#11");
+			Assert.AreEqual (20, d.Item, "#12");
+		}
+
+
+		[Test]
+		public void ImplicitCastPortToReceiver ()
+		{
+			var port = new Port<int> ();
+			var receiver = (Receiver<int>)port;
+			var dq = new VoidDispatcherQueue ();
+
+			receiver.TaskQueue = dq;
+
+			Assert.IsNull (receiver.Arbiter, "#1");
+			Assert.AreEqual (ReceiverTaskState.Onetime, receiver.State, "#2");
+			Assert.IsNull (receiver.Execute (), "#3");
+			Assert.AreEqual (ReceiverTaskState.Onetime, receiver.State, "#4");
+
+			IPortReceive rec = port;
+			Assert.AreEqual (1, rec.GetReceivers ().Length, "#5");
+
+			ITask res = null;
+			Assert.IsFalse (receiver.Evaluate (new PortElement<int>(10), ref res), "#6");
+			Assert.IsNotNull (res, "#7");
+			Assert.IsNull (res.Execute (), "#8");
+			Assert.AreEqual (ReceiverTaskState.CleanedUp, receiver.State, "#9");
+			Assert.AreEqual (0, rec.GetReceivers ().Length, "#10");
+		}
 	}
 }

@@ -42,7 +42,7 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
-		void Push (PortElement<T> elem)
+		void Push (bool front, PortElement<T> elem)
 		{
 			lock (_lock) {
 				foreach (ReceiverTask rt in receivers) {
@@ -70,8 +70,10 @@ namespace Microsoft.Ccr.Core {
 				} else {
 					elem.Next = elem.Previous = elem;
 				}
-
-				list.AddLast (elem);
+				if (front)
+					list.AddFirst (elem);				
+				else
+					list.AddLast (elem);
 			}
 		} 
 
@@ -110,7 +112,7 @@ namespace Microsoft.Ccr.Core {
 
 		public virtual void Post (T item)
 		{
-			Push (new PortElement<T> (item, this));
+			Push (false, new PortElement<T> (item, this));
 		}
 
 		public override int GetHashCode ()
@@ -131,6 +133,25 @@ namespace Microsoft.Ccr.Core {
 			T t;
 			port.Test (out t);
 			return t;
+		}
+
+		class WeirdReceiver<T> : Receiver<T>
+		{
+			internal WeirdReceiver (Port<T> port, Task<T> task): base (port, null, task) {}
+
+			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+			{
+				base.Evaluate (messageNode, ref deferredTask);
+				return false;
+			}
+		}
+
+		public static implicit operator Receiver<T> (Port<T> port)
+		{
+			Receiver<T> res = null;
+			Task<T> task = new Task<T> ((_unused) => res.Cleanup ());
+			res = new WeirdReceiver<T> (port, task);
+			return res;
 		}
 		//IPort
 
@@ -252,7 +273,7 @@ namespace Microsoft.Ccr.Core {
 
 		public void PostElement (IPortElement element)
 		{
-			Push ((PortElement<T>)element);
+			Push (true, (PortElement<T>)element);
 		}
 
 		public IPortElement TestForElement ()
