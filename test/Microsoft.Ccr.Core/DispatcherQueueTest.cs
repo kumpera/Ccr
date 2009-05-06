@@ -26,6 +26,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Threading;
 using Microsoft.Ccr.Core.Arbiters;
 
 using NUnit.Framework;
@@ -312,9 +313,80 @@ namespace Microsoft.Ccr.Core {
 			} catch (ArgumentException) {}
 		}
 
+		[Test]
+		public void SimpleEnqueue ()
+		{
+			int cnt = 0;
+			int tpThreads = 0;
+			const int TOTAL = 10;
+			AutoResetEvent evt = new AutoResetEvent (false);
+
+			Task t = new Task(() => {
+				if (Thread.CurrentThread.IsThreadPoolThread)
+					Interlocked.Increment (ref tpThreads);
+				if (Interlocked.Increment (ref cnt) == TOTAL)
+					evt.Set ();
+			});
+			DispatcherQueue dq = new DispatcherQueue ();
+
+			for (int i = 0; i < TOTAL; ++i)
+				Assert.IsTrue (dq.Enqueue (t), "#t-"+i);
+			Assert.AreEqual (0, dq.Count, "#1");
+
+			evt.WaitOne ();
+			Assert.AreEqual (TOTAL, cnt, "#2");
+			Assert.AreEqual (TOTAL, tpThreads, "#3");
+			Assert.AreEqual (TOTAL, dq.ScheduledTaskCount, "#4");
+		}
+
+		public class RecordPartialCloneTask : Task
+		{
+			public bool cloneCalled;
+
+			public RecordPartialCloneTask (Handler h) : base (h) {
+			}
+
+			public override ITask PartialClone ()
+			{
+				cloneCalled = true;
+				return base.PartialClone ();
+			}
+		}
+
+		[Test]
+		public void SimpleEnqueueDoesntClonesTask ()
+		{
+			AutoResetEvent evt = new AutoResetEvent (false);
+
+			var task = new RecordPartialCloneTask(() => evt.Set ());
+			var dq = new DispatcherQueue ();
+
+			Assert.IsTrue (dq.Enqueue (task), "#1");
+			evt.WaitOne ();
+			Assert.IsFalse (task.cloneCalled, "#2");
+		}
+
+		[Test]
+		public void SettingIsUsingThreadPoolIsUseless ()
+		{
+			DispatcherQueue dq = new DispatcherQueue ();
+			Assert.IsTrue (dq.IsUsingThreadPool, "#1");
+			dq.IsUsingThreadPool = false;
+			Assert.IsTrue (dq.IsUsingThreadPool, "#2");
+			dq.IsUsingThreadPool = true;
+			Assert.IsTrue (dq.IsUsingThreadPool, "#3");
 
 
+			dq = new DispatcherQueue ("foo", new Dispatcher ());
+			Assert.IsFalse (dq.IsUsingThreadPool, "#4");
+			try {
+				dq.IsUsingThreadPool = false;
+				Assert.Fail ("#5");
+			} catch (InvalidOperationException) {}
 
+			dq.IsUsingThreadPool = true;
+			Assert.IsFalse (dq.IsUsingThreadPool, "#6");
+		}
 
 	}
 }

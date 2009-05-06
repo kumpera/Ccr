@@ -34,7 +34,7 @@ namespace Microsoft.Ccr.Core {
 	{
 		Dispatcher dispatcher;
 		bool suspended;
-
+		long scheduledItems;
 
 		void ConfigureDefaults ()
 		{
@@ -58,7 +58,6 @@ namespace Microsoft.Ccr.Core {
 			Timescale = 1;
 	
 			Policy = policy;
-			//MaximumSchedulingRate = 1;
 		}
 
 		public DispatcherQueue () : this ("Unnamed queue using Threadpool") {}
@@ -70,13 +69,12 @@ namespace Microsoft.Ccr.Core {
 			Name = name;
 			ThrottlingSleepInterval = new TimeSpan (0,0,0,0,10);
 			Timescale = 1;
-			IsUsingThreadPool = true;
 		}
 
 		public DispatcherQueue (string name, Dispatcher dispatcher) : this (name, dispatcher, TaskExecutionPolicy.Unconstrained)
 		{
 			MaximumSchedulingRate = 1;
-		} 
+		}
 
 		public DispatcherQueue(string name, Dispatcher dispatcher, TaskExecutionPolicy policy, int maximumQueueDepth) : this (name, dispatcher, policy) 
 		{
@@ -115,6 +113,17 @@ namespace Microsoft.Ccr.Core {
 				GC.SuppressFinalize (this);
 		}
 
+		[MonoTODO ("Support Dispatcher and non unconstrained policies")]
+		public virtual bool Enqueue (ITask task)
+		{
+			if (dispatcher == null) {
+				Handler x = () => task.Execute ();
+				++scheduledItems;
+				return x.BeginInvoke (null, null) != null;
+			} else
+				throw new NotImplementedException ();
+		}
+
 		public int Count { get; set; }
 		public double CurrentSchedulingRate { get; set; }
 		public string Name { get; set; }
@@ -130,11 +139,23 @@ namespace Microsoft.Ccr.Core {
 			get { return suspended; }
 		}
 
-		public bool IsUsingThreadPool { get; set; }
+		public bool IsUsingThreadPool
+		{
+			get { return dispatcher == null; }
+			set
+			{
+				if (dispatcher != null && !value)
+					throw new InvalidOperationException ();
+			}
+		}
+			
 		public int MaximumQueueDepth { get; set; }
 		public double MaximumSchedulingRate { get; set; }
 		public TaskExecutionPolicy Policy { get; set; }
-		public long ScheduledTaskCount { get; set; }
+		public long ScheduledTaskCount {
+			get { return scheduledItems; }
+			set { scheduledItems = value; }
+		}
 
 		[XmlIgnoreAttribute]
 		public TimeSpan ThrottlingSleepInterval { get; set; }
@@ -147,12 +168,5 @@ namespace Microsoft.Ccr.Core {
 		{
 			get { return dispatcher; }
 		}
-
-
-		public virtual bool Enqueue (ITask task)
-		{
-			throw new NotImplementedException ();
-		}
-
 	}
 }
