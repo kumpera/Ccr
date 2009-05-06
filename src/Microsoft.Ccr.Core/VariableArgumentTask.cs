@@ -28,6 +28,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
+
 using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
@@ -58,6 +60,18 @@ namespace Microsoft.Ccr.Core {
 		public ITask PartialClone ()
 		{
 			return new VariableArgumentTask<T> (data.Length, handler);
+		}
+
+		public override string ToString ()
+		{
+			StringBuilder sb = new StringBuilder ("{");
+			foreach (var o in data) {
+				if (sb.Length == 1)
+					sb.Append (", ");
+				sb.Append (o == null ? (object)"null" : (object)o.TypedItem);
+			}
+			sb.Append ("}");
+			return String.Format ("{0} with data {1}", GetType (), sb);
 		}
 
 		public IPortElement this[int index]
@@ -104,6 +118,18 @@ namespace Microsoft.Ccr.Core {
 		public ITask PartialClone ()
 		{
 			return new VariableArgumentTask<T0, T> (data.Length, handler);
+		}
+
+		public override string ToString ()
+		{
+			StringBuilder sb = new StringBuilder ("{");
+			foreach (var o in data) {
+				if (sb.Length == 1)
+					sb.Append (", ");
+				sb.Append (o == null ? (object)"null" : (object)o.TypedItem);
+			}
+			sb.Append ("}");
+			return String.Format ("{0} with data ({1}){2}", GetType (), Param0 == null ? (object)"null" : (object)Param0.TypedItem, sb);
 		}
 
 		public IPortElement this[int index]
