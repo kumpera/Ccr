@@ -113,7 +113,7 @@ namespace Microsoft.Ccr.Core {
 				GC.SuppressFinalize (this);
 		}
 
-		[MonoTODO ("Support Dispatcher and non unconstrained policies")]
+		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
 		public virtual bool Enqueue (ITask task)
 		{
 			if (dispatcher == null) {
@@ -122,6 +122,18 @@ namespace Microsoft.Ccr.Core {
 				return x.BeginInvoke (null, null) != null;
 			} else
 				throw new NotImplementedException ();
+		}
+
+		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
+		public virtual void Suspend ()
+		{
+			suspended = true;
+		}
+
+		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
+		public virtual void Resume ()
+		{
+			suspended = false;
 		}
 
 		public int Count { get; set; }

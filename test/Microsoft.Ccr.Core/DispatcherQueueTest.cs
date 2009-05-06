@@ -388,5 +388,42 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsFalse (dq.IsUsingThreadPool, "#6");
 		}
 
+		[Test]
+		public void SuspendDoesntWorkWithCLRThreadPool ()
+		{
+			int doneThreads = 0;
+			AutoResetEvent evt = new AutoResetEvent (false);
+
+			Task t = new Task(() => {
+				Interlocked.Increment (ref doneThreads);
+				evt.Set ();
+			});
+			DispatcherQueue dq = new DispatcherQueue ();
+
+			Assert.IsTrue (dq.Enqueue (t), "#1");
+			Assert.AreEqual (0, dq.Count, "#2");
+			evt.WaitOne ();
+			Assert.AreEqual (1, doneThreads, "#3");
+
+			dq.Suspend ();
+			Assert.IsTrue (dq.IsSuspended, "#4");
+			Assert.IsTrue (dq.Enqueue (t), "#5");
+			Assert.IsTrue (evt.WaitOne (10000, false), "#6");
+
+			Assert.AreEqual (2, doneThreads, "#7");
+			Assert.AreEqual (0, dq.Count, "#8");
+		}
+
+		[Test]
+		public void ResumeClearSuspendedState ()
+		{
+			DispatcherQueue dq = new DispatcherQueue ();
+			Assert.IsFalse (dq.IsSuspended, "#1");
+			dq.Suspend ();
+			Assert.IsTrue (dq.IsSuspended, "#2");
+			dq.Resume ();
+			Assert.IsFalse (dq.IsSuspended, "#3");
+			
+		}
 	}
 }
