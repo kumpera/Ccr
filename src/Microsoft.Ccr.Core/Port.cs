@@ -45,18 +45,20 @@ namespace Microsoft.Ccr.Core {
 		void Push (bool front, PortElement<T> elem)
 		{
 			lock (_lock) {
-				foreach (ReceiverTask rt in receivers) {
+				for (var node = receivers.First; node != null; node = node.Next) {
+					ReceiverTask rt = node.Value;
+
 					ITask task = null;
-					if (rt.Evaluate (elem, ref task)) {
-						if (task != null) {
-							DispatcherQueue dq = rt.TaskQueue;
-							if (dq != null)
-								dq.Enqueue (task);
-						}
-						if (rt.State != ReceiverTaskState.Persistent)
-							receivers.Remove (rt);
-						return;
+					bool res = rt.Evaluate (elem, ref task);
+					if (task != null) {
+						DispatcherQueue dq = rt.TaskQueue;
+						if (dq != null)
+							dq.Enqueue (task);
 					}
+					if (res && rt.State != ReceiverTaskState.Persistent)
+						receivers.Remove (node);
+					if (res)
+						return;
 				}
 
 				if (list.Count > 0) {

@@ -174,19 +174,6 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
-		/* [Test]
-		public void WhatHappensToResultTask ()
-		{
-			var p = new Port<int> ();
-			IPortReceive ipr = p;
-
-			MyReceiver mr = new MyReceiver (2, new MyTask ());
-			mr.TaskQueue = new  DispatcherQueue (); 
-			ipr.RegisterReceiver (mr);
-
-			p.Post (10);
-		}*/
-
 		class VoidDispatcherQueue : DispatcherQueue
 		{
 			public int queuedTasks;
@@ -738,7 +725,6 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (20, d.Item, "#12");
 		}
 
-
 		[Test]
 		public void ImplicitCastPortToReceiver ()
 		{
@@ -762,6 +748,61 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsNull (res.Execute (), "#8");
 			Assert.AreEqual (ReceiverTaskState.CleanedUp, receiver.State, "#9");
 			Assert.AreEqual (0, rec.GetReceivers ().Length, "#10");
+		}
+
+		[Test]
+		public void ScheduleAllTaskReturnedByEvaluate ()
+		{
+			Task tk0 = new Task(()=>{});
+			Task tk1 = new Task(()=>{});
+			EvalTask rv0 = new EvalTask (false, tk0); 
+			VoidDispatcherQueue dq0 = new VoidDispatcherQueue ();
+			rv0.TaskQueue = dq0; 
+			EvalTask rv1 = new EvalTask (false, tk1); 
+			VoidDispatcherQueue dq1 = new VoidDispatcherQueue ();
+			rv1.TaskQueue = dq1; 
+
+			Port<int> port = new Port<int> ();
+			IPortReceive ipr = port;
+
+			ipr.RegisterReceiver (rv0);
+			ipr.RegisterReceiver (rv1);
+
+			port.Post (10);
+
+			Assert.AreEqual (1, dq0.queuedTasks, "#1");
+			Assert.AreEqual (1, dq1.queuedTasks, "#2");
+			Assert.AreEqual (2, ipr.GetReceivers ().Length, "#3");
+		}
+
+		[Test]
+		public void DontRemoveOnetimeReceiversThatReturnFalse ()
+		{
+			Task tk0 = new Task(()=>{});
+			Task tk1 = new Task(()=>{});
+			EvalTask rv0 = new EvalTask (true, tk0); 
+			VoidDispatcherQueue dq0 = new VoidDispatcherQueue ();
+			rv0.TaskQueue = dq0; 
+			EvalTask rv1 = new EvalTask (false, tk1); 
+			VoidDispatcherQueue dq1 = new VoidDispatcherQueue ();
+			rv1.TaskQueue = dq1; 
+
+			Port<int> port = new Port<int> ();
+			IPortReceive ipr = port;
+
+			ipr.RegisterReceiver (rv0);
+
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#1");
+			port.Post (10);
+			Assert.AreEqual (1, dq0.queuedTasks, "#2");
+			Assert.AreEqual (0, ipr.GetReceivers ().Length, "#3");
+
+			ipr.RegisterReceiver (rv1);
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#4");
+			port.Post (10);
+			Assert.AreEqual (1, dq1.queuedTasks, "#5");
+			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#6");
+
 		}
 	}
 }
