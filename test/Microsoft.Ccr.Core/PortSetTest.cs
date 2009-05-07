@@ -454,5 +454,117 @@ namespace Microsoft.Ccr.Core {
 			ExposeFieldsPortSet p = new ExposeFieldsPortSet (new Type[] {typeof (int), typeof (bool) });
 			Assert.IsTrue (p._AllocatePort<int> () is Port<int>, "#1");
 		}
+
+		[Test]
+		public void SharedPortModeSwitching ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+
+			Assert.IsNull (ps.SharedPort, "#1");
+			Assert.IsNull (ps._SharedPortInternal, "#2");
+			Assert.AreEqual (PortSetMode.Default, ps.Mode, "#3");
+			Assert.AreEqual (2, ps.Ports.Count, "#4");
+
+			ps.Mode = PortSetMode.SharedPort;
+			Assert.AreEqual (PortSetMode.SharedPort, ps.Mode, "#5");
+			Assert.AreEqual (1, ps.Ports.Count, "#6");
+			Assert.IsNotNull (ps.SharedPort, "#7");
+			Assert.IsNotNull (ps._SharedPortInternal, "#8");
+
+			ps.Mode = PortSetMode.Default;
+			Assert.IsNull (ps.SharedPort, "#9");
+			Assert.IsNull (ps._SharedPortInternal, "#10");
+			Assert.AreEqual (PortSetMode.Default, ps.Mode, "#11");
+			Assert.AreEqual (2, ps.Ports.Count, "#12");
+		}
+
+		[Test]
+		public void SharedPortShape1 ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+			ps.Mode = PortSetMode.SharedPort;
+
+			var sh = ps.SharedPort;
+			Assert.AreEqual (0, sh.ItemCount, "#1");
+			Assert.AreEqual (PortMode.Default, sh.Mode, "#2");
+
+			IPortReceive pr = sh;
+			Assert.AreEqual (0, pr.GetReceivers ().Length, "#3");
+
+			try {
+				var p0 = ps [typeof (int)];
+				Assert.Fail ("#4");
+			} catch (InvalidOperationException) {}
+		}
+
+		[Test]
+		public void SharedPortShape2 ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+			var p0 = (IPortReceive)ps [typeof (int)];
+			Assert.AreEqual (0, p0.GetReceivers ().Length, "#1");
+
+			ps.Mode = PortSetMode.SharedPort;
+
+			var sh = ps.SharedPort;
+			Assert.AreEqual (0, sh.ItemCount, "#2");
+			Assert.AreEqual (PortMode.Default, sh.Mode, "#3");
+
+			IPortReceive pr = sh;
+			Assert.AreEqual (0, pr.GetReceivers ().Length, "#4");
+			Assert.AreEqual (0, p0.GetReceivers ().Length, "#5");
+		}
+
+		[Test]
+		public void PortsAllocation ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+			var a = ps [typeof (int)];
+			var b = ps [typeof (int)];
+			Assert.AreSame (a, b, "#1");
+
+			ps.Mode = PortSetMode.SharedPort;
+			Assert.IsNotNull (ps._PortsTable [0], "#2");
+			
+			ps.Mode = PortSetMode.Default;
+			b = ps [typeof (int)];
+			Assert.AreSame (a, b, "#3");
+		}
+
+		[Test]
+		public void AllocatePortUnderSharedMode ()
+		{
+			ExposeFieldsPortSet p = new ExposeFieldsPortSet (new Type[] {typeof (int), typeof (bool) });
+			p.Mode = PortSetMode.SharedPort;
+			try {
+				p._AllocatePort<int> ();
+				Assert.Fail ("#4");
+			} catch (InvalidOperationException) {}				
+		}
+
+		[Test]
+		public void AllocatePortMultipleTimes ()
+		{
+			ExposeFieldsPortSet p = new ExposeFieldsPortSet (new Type[] {typeof (int), typeof (bool) });
+			var a = p._AllocatePort<int> ();			
+			var b = p._AllocatePort<int> ();
+			Assert.AreSame (a, b, "#1");
+			Assert.AreSame (a, p [typeof (int)], "#2");
+			Assert.IsNull (p._AllocatePort<DateTime> (), "#3");
+			Assert.IsNotNull (p._AllocatePort<bool> (), "#4");
+		}
+
+		[Test]
+		public void SharedPortCreatesPortEverytime ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+			ps.Mode = PortSetMode.SharedPort;
+			var pa = ps.SharedPort;
+			ps.Mode = PortSetMode.Default;
+			ps.Mode = PortSetMode.SharedPort;
+			var pb = ps.SharedPort;
+			Assert.AreNotSame (pa, pb, "#1");
+		}
+
 	}
 }

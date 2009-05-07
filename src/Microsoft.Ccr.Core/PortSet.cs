@@ -43,13 +43,22 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
-		protected Port<TYPE> AllocatePort<TYPE> ()
+		IPort FindPort (Type portType)
 		{
-			return new Port<TYPE> ();
+			if (ModeInternal != PortSetMode.Default)
+				throw new InvalidOperationException ("Mode is not Default"); 
+			for (int i = 0; i < Types.Length; ++i)
+				if (Types [i] == portType)
+					return PortsTable [i];
+			return null;
 		}
 
+		protected Port<TYPE> AllocatePort<TYPE> ()
+		{
+			return (Port<TYPE>) FindPort (typeof (TYPE));
+		}
 
-		public PortSet (Type[] types)
+		public PortSet (params Type[] types)
 		{
 			if (types == null)
 				throw new ArgumentNullException ("types");
@@ -137,22 +146,35 @@ namespace Microsoft.Ccr.Core {
 		{
 			get
 			{
-				for (int i = 0; i < Types.Length; ++i)
-					if (Types [i] == portItemType)
-						return PortsTable [i];
-				return null;
+				return FindPort (portItemType);
 			}
 		}
 
 		public PortSetMode Mode
 		{
 			get { return ModeInternal; }
-			set { ModeInternal = value; }
+			set
+			{
+				ModeInternal = value;
+				if (value == PortSetMode.Default) {
+					SharedPortInternal = null;
+				} else {
+					SharedPortInternal = new Port<object> ();
+				}
+			}
 		}
 
 		public ICollection<IPort> Ports
 		{
-			get { return Array.AsReadOnly (PortsTable); }
+			get
+			{
+				if (ModeInternal == PortSetMode.Default)
+					return Array.AsReadOnly (PortsTable);
+
+				List<IPort> list = new List<IPort> ();
+				list.Add (SharedPortInternal);
+				return list.AsReadOnly ();
+			}
 		}
 
 		public Port<Object> SharedPort
