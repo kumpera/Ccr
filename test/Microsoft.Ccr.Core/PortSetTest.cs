@@ -104,5 +104,36 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsNull (ps.SharedPort, "#9");
 		}
 
+		[Test]
+		public void GenericTestMethod ()
+		{
+			Type tint = typeof (int);
+			Type tstr = typeof (string);
+			var ps = new PortSet (new Type[] { tint, tstr });
+
+			ps[tint].PostUnknownType (10);
+			ps[tint].PostUnknownType (20);
+			ps[tstr].PostUnknownType ("hello");
+
+			Assert.AreEqual (10, ps.Test<int>(), "#1"); 
+			Assert.AreEqual ("hello", ps.Test<string>(), "#2"); 
+			Assert.AreEqual (20, ps.Test<int>(), "#3");
+			try { 
+				ps.Test<int> (); //LAMEIMPL fail that bad instead of returning default(T)? LAME
+				Assert.Fail ("#4");
+			} catch (NullReferenceException) {}
+
+			Assert.AreEqual (null, ps.Test<string>(), "#5"); 
+
+			try {
+				ps.Test<object> ();
+				Assert.Fail ("#6");
+			} catch (PortNotFoundException) {}
+
+			try {
+				ps.Test<double> ();
+				Assert.Fail ("#7");
+			} catch (PortNotFoundException) {}
+		}
 	}
 }

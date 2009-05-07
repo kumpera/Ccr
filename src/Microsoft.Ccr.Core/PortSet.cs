@@ -71,7 +71,10 @@ namespace Microsoft.Ccr.Core {
 
 		public T Test<T> ()
 		{
-			throw new NotImplementedException ();
+			IPortReceive p = (IPortReceive)this[typeof(T)];
+			if (p == null)
+				throw new PortNotFoundException(typeof (T).ToString ());
+			return (T)p.Test ();
 		}
 
 		public IPort this[Type portItemType]
