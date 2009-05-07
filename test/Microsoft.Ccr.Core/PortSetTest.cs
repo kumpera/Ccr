@@ -566,5 +566,44 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreNotSame (pa, pb, "#1");
 		}
 
+		[Test]
+		public void PostUnknownTypeUnderSharedMode ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+			ps.Mode = PortSetMode.SharedPort;
+			var sh = ps.SharedPort;
+
+			ps.PostUnknownType (DateTime.Now);
+			Assert.AreEqual (1, sh.ItemCount, "#1");
+			Assert.IsTrue (ps.TryPostUnknownType (DateTime.Now), "#2");
+			Assert.AreEqual (2, sh.ItemCount, "#3");
+
+			ps.Mode = PortSetMode.Default;
+
+			try {
+				ps.PostUnknownType (DateTime.Now);
+				Assert.Fail ("#4");
+			} catch (PortNotFoundException) {}
+		}
+
+		[Test]
+		public void TestUnderSharedMode ()
+		{
+			var ps = new ExposeFieldsPortSet (new Type[] { typeof (int), typeof (string) });
+			ps.Mode = PortSetMode.SharedPort;
+			var sh = ps.SharedPort;
+			sh.Post (10);
+
+			Assert.AreEqual (10, ps.Test <int> (), "#1");
+
+			sh.Post (10);
+			try {
+				ps.Test <string> ();
+				Assert.Fail ("#2");
+			} catch (InvalidCastException) {}
+			sh.Post (10);
+
+			Assert.AreEqual (10, ps.Test <object> (), "3");
+		}
 	}
 }

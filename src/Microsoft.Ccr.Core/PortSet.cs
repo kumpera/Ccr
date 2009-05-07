@@ -97,6 +97,11 @@ namespace Microsoft.Ccr.Core {
 		{
 			Type portType;
 
+			if (ModeInternal == PortSetMode.SharedPort) {
+				SharedPortInternal.Post (item);
+				return;
+			}
+
 			portType = ResolvePort (item, Types);
 			if (portType == null)
 				throw new PortNotFoundException ("item");
@@ -108,6 +113,11 @@ namespace Microsoft.Ccr.Core {
 		{
 			Type portType;
 
+			if (ModeInternal == PortSetMode.SharedPort) {
+				SharedPortInternal.Post (item);
+				return true;
+			}
+
 			portType = ResolvePort (item, Types);
 			if (portType == null)
 				return false;
@@ -118,6 +128,10 @@ namespace Microsoft.Ccr.Core {
 
 		public T Test<T> ()
 		{
+			if (ModeInternal == PortSetMode.SharedPort) {
+				return (T)SharedPortInternal.Test ();
+			}
+
 			IPortReceive p = (IPortReceive)this[typeof(T)];
 			if (p == null)
 				throw new PortNotFoundException(typeof (T).ToString ());
@@ -180,6 +194,5 @@ namespace Microsoft.Ccr.Core {
 		{
 			get { return SharedPortInternal; }
 		}
-
 	}
 }
