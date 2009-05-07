@@ -43,6 +43,12 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
+		protected Port<TYPE> AllocatePort<TYPE> ()
+		{
+			return new Port<TYPE> ();
+		}
+
+
 		public PortSet (Type[] types)
 		{
 			if (types == null)

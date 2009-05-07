@@ -46,6 +46,11 @@ namespace Microsoft.Ccr.Core {
 			public IPort[] _PortsTable { get { return PortsTable; } }
 			public Port<Object> _SharedPortInternal { get { return SharedPortInternal; } }
 			public Type[] _Types { get { return Types; } }
+
+			public Port<T> _AllocatePort<T> ()
+			{
+				return AllocatePort<T> ();
+			}
 		}
 
 		[Test]
@@ -441,6 +446,13 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (3, port.GetItems ().Length, "#3");  
 			ps.PostUnknownType (DateTime.Now);
 			Assert.AreEqual (4, port.GetItems ().Length, "#4");  
+		}
+
+		[Test]
+		public void AllocatePort ()
+		{
+			ExposeFieldsPortSet p = new ExposeFieldsPortSet (new Type[] {typeof (int), typeof (bool) });
+			Assert.IsTrue (p._AllocatePort<int> () is Port<int>, "#1");
 		}
 	}
 }
