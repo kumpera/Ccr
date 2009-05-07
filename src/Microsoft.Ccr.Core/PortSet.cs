@@ -92,7 +92,14 @@ namespace Microsoft.Ccr.Core {
 
 		public bool TryPostUnknownType (object item)
 		{
-			throw new NotImplementedException ();
+			Type portType;
+
+			portType = ResolvePort (item, Types);
+			if (portType == null)
+				return false;
+
+			this [portType].PostUnknownType (item);
+			return true;
 		}
 
 		public T Test<T> ()

@@ -391,5 +391,56 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (typeof (string), res, "#12");
 		}
 
+		[Test]
+		public void TryPostUnknownType1 ()
+		{
+			Type tint = typeof (int);
+			Type tb = typeof (B);
+			Type tc = typeof (A);
+			var ps = new PortSet (new Type[] { tint, tb, tc });
+			object obj;
+
+			Port<int> p0 = (Port<int>)ps [tint]; 
+			Port<B> p1 = (Port<B>)ps [tb]; 
+			Port<A> p2 = (Port<A>)ps [tc]; 
+
+			Assert.IsFalse (ps.TryPostUnknownType ("hello"), "#1");
+			Assert.IsFalse (ps.TryPostUnknownType ((short)10), "#2");
+			Assert.IsFalse (ps.TryPostUnknownType (new object ()), "#3");
+
+			Assert.IsTrue (ps.TryPostUnknownType (10), "#4");
+			Assert.AreEqual (10, (int)p0, "#5");
+
+			Assert.IsTrue (ps.TryPostUnknownType (obj = new B ()), "#6");
+			Assert.AreEqual (obj, p1.Test (), "#7");
+
+			Assert.IsTrue (ps.TryPostUnknownType (obj = new A ()), "#8");
+			Assert.AreEqual (obj, p2.Test (), "#9");
+
+			Assert.IsTrue (ps.TryPostUnknownType (obj = new C ()), "#10");
+			Assert.AreEqual (obj, p2.Test (), "#11");
+		}
+
+		[Test]
+		public void TryPostUnknownTypeNull ()
+		{
+			var ps = new PortSet (new Type[] { typeof (int), typeof (double) });
+			Assert.IsFalse (ps.TryPostUnknownType ("hello"), "#1");
+			Assert.IsFalse (ps.TryPostUnknownType (null), "#2");
+		}
+
+		[Test]
+		public void PostUnknownTypeValueType ()
+		{
+			var ps = new PortSet (new Type[] { typeof (string), typeof (object) });
+			Assert.IsTrue (ps.TryPostUnknownType (10), "#1");
+			Assert.IsTrue (ps.TryPostUnknownType (DateTime.Now), "#2");
+
+			IPortReceive port = (IPortReceive)ps[typeof(object)];
+			ps.PostUnknownType (10);
+			Assert.AreEqual (3, port.GetItems ().Length, "#3");  
+			ps.PostUnknownType (DateTime.Now);
+			Assert.AreEqual (4, port.GetItems ().Length, "#4");  
+		}
 	}
 }
