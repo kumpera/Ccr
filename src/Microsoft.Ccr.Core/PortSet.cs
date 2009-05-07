@@ -35,7 +35,6 @@ namespace Microsoft.Ccr.Core {
 	{
 		protected PortSetMode ModeInternal;
 		protected IPort[] PortsTable;
-		[MonoTODO ("add support for shared port mode")]
 		protected Port<Object> SharedPortInternal;
 		protected Type[] Types;
 
