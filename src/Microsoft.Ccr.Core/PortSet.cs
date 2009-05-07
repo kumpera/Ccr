@@ -59,9 +59,35 @@ namespace Microsoft.Ccr.Core {
 				this.PortsTable[i] = (IPort)Activator.CreateInstance (typeof (Port<>).MakeGenericType (types [i]));
 		}
 
+		static Type ResolvePort (object item, Type[] types)
+		{
+			if (item == null) {
+				foreach (var t in types) {
+					if (!t.IsValueType)
+						return t;
+				}
+				return null;
+			}
+			Type item_type = item.GetType ();
+			Type first_match = null;
+			foreach (var t in types) {
+				if (t == item_type)
+					return t;
+				if (first_match == null && t.IsAssignableFrom (item_type))
+					first_match = t;
+			}
+			return first_match;
+		}
+
 		public void PostUnknownType (object item)
 		{
-			throw new NotImplementedException ();
+			Type portType;
+
+			portType = ResolvePort (item, Types);
+			if (portType == null)
+				throw new PortNotFoundException ("item");
+
+			this [portType].PostUnknownType (item);
 		}
 
 		public bool TryPostUnknownType (object item)
@@ -75,6 +101,23 @@ namespace Microsoft.Ccr.Core {
 			if (p == null)
 				throw new PortNotFoundException(typeof (T).ToString ());
 			return (T)p.Test ();
+		}
+
+		public static bool FindTypeFromRuntimeType (object item, Type[] types, out Type portItemType)
+		{
+			portItemType = null;
+			if (item == null) {
+				foreach (var t in types) {
+					if (!t.IsValueType) {
+						portItemType = t;
+						return true;
+					}
+				}
+				return false;
+			}
+			
+			portItemType = item.GetType ();
+			return true;
 		}
 
 		public IPort this[Type portItemType]

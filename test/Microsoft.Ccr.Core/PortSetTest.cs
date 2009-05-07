@@ -26,6 +26,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Ccr.Core.Arbiters;
 
@@ -135,5 +136,260 @@ namespace Microsoft.Ccr.Core {
 				Assert.Fail ("#7");
 			} catch (PortNotFoundException) {}
 		}
+
+		class A {}
+		class B : A {}
+		class C : A {}
+
+		[Test]
+		public void PostUnknownType ()
+		{
+			Type tint = typeof (int);
+			Type tb = typeof (B);
+			Type tc = typeof (A);
+			var ps = new PortSet (new Type[] { tint, tb, tc });
+			object obj;
+
+			Port<int> p0 = (Port<int>)ps [tint]; 
+			Port<B> p1 = (Port<B>)ps [tb]; 
+			Port<A> p2 = (Port<A>)ps [tc]; 
+
+			try {
+				ps.PostUnknownType ("hello");
+				Assert.Fail ("#1");
+			} catch (PortNotFoundException) {}
+
+			try {
+				ps.PostUnknownType ((short)10);
+				Assert.Fail ("#2");
+			} catch (PortNotFoundException) {}
+
+			try {
+				ps.PostUnknownType (new object ());
+				Assert.Fail ("#3");
+			} catch (PortNotFoundException) {}
+
+			ps.PostUnknownType (10);
+			Assert.AreEqual (10, (int)p0, "#4");
+
+			ps.PostUnknownType (obj = new B ());
+			Assert.AreEqual (obj, p1.Test (), "#5");
+
+			ps.PostUnknownType (obj = new A ());
+			Assert.AreEqual (obj, p2.Test (), "#6");
+
+			ps.PostUnknownType (obj = new C ());
+			Assert.AreEqual (obj, p2.Test (), "#7");
+		}
+
+		[Test]
+		public void PostUnknownTypeNull ()
+		{
+			Type tint = typeof (int);
+			Type tstr = typeof (string);
+		
+			var ps = new PortSet (new Type[] { tint, tstr });
+
+			IPortReceive p0 = (IPortReceive)ps [tint]; 
+			IPortReceive p1 = (IPortReceive)ps [tstr]; 
+
+			ps.PostUnknownType (null);
+			Assert.AreEqual (0, p0.GetItems ().Length, "#1");
+			Assert.AreEqual (1, p1.GetItems ().Length, "#2");
+		}
+
+		[Test]
+		public void PostUnknownTypeNull2 ()
+		{
+			Type tstr = typeof (string);
+			Type tobj = typeof (object);
+		
+			var ps = new PortSet (new Type[] { tstr, tobj });
+
+			IPortReceive p0 = (IPortReceive)ps [tstr]; 
+			IPortReceive p1 = (IPortReceive)ps [tobj]; 
+
+			ps.PostUnknownType (null);
+			Assert.AreEqual (1, p0.GetItems ().Length, "#1");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#2");
+		}
+		
+		[Test]
+		public void PostUnknownTypeOrdering1 ()
+		{
+			Type tobj = typeof (object);
+			Type ta = typeof (A);
+
+			var ps = new PortSet (new Type[] { tobj, ta });
+
+			Port<object> p0 = (Port<object>)ps [tobj]; 
+			Port<A> p1 = (Port<A>)ps [ta]; 
+
+			object obj;
+
+			ps.PostUnknownType (obj = new B ());
+			Assert.AreEqual (obj, p0.Test (), "#1");
+			Assert.AreEqual (null, p1.Test (), "#2");
+
+			ps.PostUnknownType (obj = new A ());
+			Assert.AreEqual (null, p0.Test (), "#3");
+			Assert.AreEqual (obj, p1.Test (), "#4");
+		}
+
+		[Test]
+		public void PostUnknownTypeOrdering2 ()
+		{
+			Type ta = typeof (A);
+			Type tobj = typeof (object);
+
+			var ps = new PortSet (new Type[] { ta, tobj });
+
+			Port<A> p0 = (Port<A>)ps [ta]; 
+			Port<object> p1 = (Port<object>)ps [tobj]; 
+
+			object obj;
+
+			ps.PostUnknownType (obj = new B ());
+			Assert.AreEqual (obj, p0.Test (), "#1");
+			Assert.AreEqual (null, p1.Test (), "#2");
+
+			ps.PostUnknownType (obj = new A ());
+			Assert.AreEqual (obj, p0.Test (), "#3");
+			Assert.AreEqual (null, p1.Test (), "#4");
+		}
+
+		[Test]
+		public void PostUnknownTypeOrdering3 ()
+		{
+			Type tcol = typeof (ICollection);
+			Type tlist = typeof (IList);
+
+			var ps = new PortSet (new Type[] { tcol, tlist });
+
+			IPortReceive p0 = (IPortReceive)ps [tcol]; 
+			IPortReceive p1 = (IPortReceive)ps [tlist]; 
+
+			object obj;
+
+			ps.PostUnknownType (obj = new ArrayList ());
+			Assert.AreEqual (1, p0.GetItems ().Length, "#1");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#2");
+
+			ps.PostUnknownType (obj = new int [10]);
+			Assert.AreEqual (2, p0.GetItems ().Length, "#3");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#4");
+		}
+
+		[Test]
+		public void PostUnknownTypeOrdering4 ()
+		{
+			Type tcol = typeof (ICollection);
+			Type tlist = typeof (ArrayList);
+
+			var ps = new PortSet (new Type[] { tcol, tlist });
+
+			IPortReceive p0 = (IPortReceive)ps [tcol]; 
+			IPortReceive p1 = (IPortReceive)ps [tlist]; 
+
+			object obj;
+
+			ps.PostUnknownType (obj = new ArrayList ());
+			Assert.AreEqual (0, p0.GetItems ().Length, "#1");
+			Assert.AreEqual (1, p1.GetItems ().Length, "#2");
+
+			ps.PostUnknownType (obj = new int [10]);
+			Assert.AreEqual (1, p0.GetItems ().Length, "#3");
+			Assert.AreEqual (1, p1.GetItems ().Length, "#4");
+		}
+
+		[Test]
+		public void PostUnknownTypeOrdering5 ()
+		{
+			Type tcol = typeof (ICollection);
+			Type tobj = typeof (object);
+
+			var ps = new PortSet (new Type[] { tcol, tobj });
+
+			IPortReceive p0 = (IPortReceive)ps [tcol]; 
+			IPortReceive p1 = (IPortReceive)ps [tobj]; 
+
+			object obj;
+
+			ps.PostUnknownType (obj = new ArrayList ());
+			Assert.AreEqual (1, p0.GetItems ().Length, "#1");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#2");
+
+			ps.PostUnknownType (obj = new int [10]);
+			Assert.AreEqual (2, p0.GetItems ().Length, "#3");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#4");
+		}
+
+		[Test]
+		public void PostUnknownTypeOrdering6 ()
+		{
+			Type tcol = typeof (ICollection);
+			Type tobj = typeof (object);
+
+			var ps = new PortSet (new Type[] { tobj, tcol });
+
+			IPortReceive p0 = (IPortReceive)ps [tobj]; 
+			IPortReceive p1 = (IPortReceive)ps [tcol]; 
+
+			object obj;
+
+			ps.PostUnknownType (obj = new ArrayList ());
+			Assert.AreEqual (1, p0.GetItems ().Length, "#1");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#2");
+
+			ps.PostUnknownType (obj = new int [10]);
+			Assert.AreEqual (2, p0.GetItems ().Length, "#3");
+			Assert.AreEqual (0, p1.GetItems ().Length, "#4");
+		}
+
+		[Test]
+		public void FindTypeFromRuntimeTypeWithNull ()
+		{
+			Type res;
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (null, new Type[] { typeof (object) }, out res), "#1");
+			Assert.AreEqual (typeof (object), res, "#2");
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (null, new Type[] { typeof (ICollection<int>) }, out res), "#2");
+			Assert.AreEqual (typeof (ICollection<int>), res, "#3");
+
+			Assert.IsFalse (PortSet.FindTypeFromRuntimeType (null, new Type[] { typeof (int) }, out res), "#3");
+			Assert.IsFalse (PortSet.FindTypeFromRuntimeType (null, new Type[] { typeof (PortSetMode) }, out res), "#4");
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (null, new Type[] { typeof (Enum) }, out res), "#5");
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (null, new Type[] { typeof (ValueType) }, out res), "#6");
+		}
+
+		[Test]
+		public void FindTypeFromRuntime ()
+		{
+			//LAMEIMPL this method is completely useless and broken
+			Type res;
+			Type[] types = new Type[] { typeof (ICollection<int>), typeof (object) };
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (new int[0], types, out res), "#1");
+			Assert.AreEqual (typeof (int[]), res, "#2");
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (10, types, out res), "#3");
+			Assert.AreEqual (typeof (int), res, "#4");
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType ("hello", types, out res), "#5");
+			Assert.AreEqual (typeof (string), res, "#6");
+
+			types = new Type[] { typeof (int), typeof (object) };
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (new int[0], types, out res), "#7");
+			Assert.AreEqual (typeof (int[]), res, "#8");
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType (10, types, out res), "#9");
+			Assert.AreEqual (typeof (int), res, "#10");
+
+			Assert.IsTrue (PortSet.FindTypeFromRuntimeType ("hello", types, out res), "#11");
+			Assert.AreEqual (typeof (string), res, "#12");
+		}
+
 	}
 }
