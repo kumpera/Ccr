@@ -76,5 +76,35 @@ namespace Microsoft.Ccr.Core {
 			rec.Consume (new PortElement<int> (10));
 			Assert.AreEqual (11, executed, "#5");
 		}
+
+		[Test]
+		public void Activate ()
+		{
+			int exec = 0;
+			var task = new Task (() =>{ ++exec; });
+			DispatcherQueue dq = new SerialDispatchQueue ();
+
+			Assert.IsNull (task.TaskQueue, "#1");
+			Arbiter.Activate (dq, task);
+			Assert.AreEqual (1, exec, "#4");
+			Arbiter.Activate (dq, task, task, task);
+			Assert.AreEqual (4, exec, "#5");
+		}
+
+		[Test]
+		public void ActivateBadArgs ()
+		{
+			var task = new Task (() =>{ });
+			DispatcherQueue dq = new SerialDispatchQueue ();
+			try {
+				Arbiter.Activate (null, task);
+				Assert.Fail ("#1");
+			} catch (ArgumentNullException) {}
+
+			try {
+				Arbiter.Activate (dq, null);
+				Assert.Fail ("#2");
+			} catch (ArgumentNullException) {}
+		}
 	}
 }

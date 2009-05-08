@@ -31,6 +31,16 @@ namespace Microsoft.Ccr.Core {
 
 	public static class Arbiter
 	{
+		public static void Activate (DispatcherQueue dispatcherQueue, params ITask[] arbiter)
+		{
+			if (dispatcherQueue == null)
+				throw new ArgumentNullException ("dispatcher");
+			if (arbiter == null)
+				throw new ArgumentNullException ("arbiter");
+			foreach (var task in arbiter)
+				dispatcherQueue.Enqueue (task);
+		}		
+		
 		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler)
 		{
 			return new Receiver<T> (persist, port, null, new Task<T> (handler));
