@@ -40,6 +40,11 @@ namespace Microsoft.Ccr.Core {
 			foreach (var task in arbiter)
 				dispatcherQueue.Enqueue (task);
 		}		
+
+		public static ITask FromHandler (Handler handler)
+		{
+			return new Task (handler);
+		}
 		
 		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler)
 		{
@@ -49,10 +54,7 @@ namespace Microsoft.Ccr.Core {
 		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler, Predicate<T> predicate)
 		{
 			return new Receiver<T> (persist, port, predicate, new Task<T> (handler));
-		}	
-
-		
-		
+		}
 	}
 
 }

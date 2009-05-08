@@ -106,5 +106,15 @@ namespace Microsoft.Ccr.Core {
 				Assert.Fail ("#2");
 			} catch (ArgumentNullException) {}
 		}
+
+
+		[Test]
+		public void FromHandler ()
+		{
+			int cnt = 0;
+			var task = Arbiter.FromHandler (()=> { ++cnt; });
+			task.Execute ();
+			Assert.AreEqual (1, cnt, "#1");
+		}
 	}
 }
