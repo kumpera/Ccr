@@ -55,7 +55,6 @@ namespace Microsoft.Ccr.Core {
 			return first_match >= 0 ? ports [first_match] : null;
 		}
 
-
 		internal static IPort FindPort (Type portType, IPort[] ports, Type[] types, PortSetMode mode)
 		{
 			if (mode != PortSetMode.Default)
@@ -122,6 +121,13 @@ namespace Microsoft.Ccr.Core {
 			if (mode != PortSetMode.Default)
 				throw new InvalidOperationException ("Mode is not Default"); 
 			return port;
+		} 
+
+		internal static Port<T> GetPort<T> (PortSetMode mode, IPort[] ports, int idx)
+		{
+			if (mode != PortSetMode.Default)
+				throw new InvalidOperationException ("Mode is not Default"); 
+			return (Port<T>)ports [idx];
 		} 
 	}
 
@@ -223,5 +229,109 @@ namespace Microsoft.Ccr.Core {
 		{
 			get { return SharedPortInternal; }
 		}
+	}
+
+	public class PortSet<T0, T1> : IPortSet, IPort
+	{
+		PortSetMode mode;
+		Port<Object> sharedPort;
+		IPort[] ports;
+		Type[] types;
+
+		Port<T0> port0;
+		Port<T1> port1;
+
+		public void PostUnknownType (object item)
+		{
+			PortSetHelper.Post (item, ports, types, mode, sharedPort);
+		}
+
+		public bool TryPostUnknownType (object item)
+		{
+			return PortSetHelper.TryPost (item, ports, types, mode, sharedPort);
+		}
+
+		public IPort this[Type portItemType]
+		{
+			get
+			{
+				return PortSetHelper.FindPort (portItemType, ports, types, mode);
+			}
+		}
+
+		public Port<Object> SharedPort { get { return sharedPort; } }
+
+		public PortSetMode Mode
+		{
+			get { return mode; }
+			set
+			{
+				mode = value;
+				if (value == PortSetMode.Default) {
+					sharedPort = null;
+				} else {
+					sharedPort = new Port<object> ();
+				}
+			}
+		}
+
+		public T Test<T> ()
+		{
+			return PortSetHelper.Test<T> (ports, types, mode, sharedPort);
+		}
+
+		public ICollection<IPort> Ports
+		{
+			get
+			{
+				return PortSetHelper.GetPorts (ports, mode, sharedPort);
+			}
+		}
+
+		//generic part
+		public PortSet () : this (PortSetMode.Default) {}
+
+		public PortSet (PortSetMode mode)
+		{
+			this.port0 = new Port <T0> ();
+			this.port1 = new Port <T1> ();
+			this.ports = new IPort[] { port0, port1 };
+			this.types = new Type[] { typeof (T0), typeof (T1) };
+
+			Mode = mode;
+		}
+
+		public PortSet (Port<T0> parameter0, Port<T1> parameter1)
+		{
+			this.port0 = parameter0;
+			this.port1 = parameter1;
+			this.ports = new IPort[] { port0, port1 };
+			this.types = new Type[] { typeof (T0), typeof (T1) };
+		}
+
+		public void Post (T0 item)
+		{
+			if (mode == PortSetMode.Default)
+				port0.Post (item);
+			else
+				sharedPort.Post (item);
+		}
+
+		public void Post (T1 item)
+		{
+			if (mode == PortSetMode.Default)
+				port1.Post (item);
+			else
+				sharedPort.Post (item);
+		}
+
+		public Port<T0> P0 { get { return PortSetHelper.GetPort (mode, port0); } }
+		public Port<T1> P1 { get { return PortSetHelper.GetPort (mode, port1); } }
+
+		public static implicit operator T0 (PortSet<T0, T1> port) { return port.Test<T0> (); }
+		public static implicit operator T1 (PortSet<T0, T1> port) { return port.Test<T1> (); }
+		
+		public static implicit operator Port<T0> (PortSet<T0, T1> port) { return port.P0; }
+		public static implicit operator Port<T1> (PortSet<T0, T1> port) { return port.P1; }
 	}
 }

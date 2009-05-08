@@ -23,6 +23,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
 		src/Microsoft.Ccr.Core/PortNotFoundException.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
+		src/Microsoft.Ccr.Core/PortSet.generated.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
 		src/Microsoft.Ccr.Core/Tasks.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
@@ -39,6 +40,8 @@ TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/VariableArgumentTaskTest.cs \
 			 test/Microsoft.Ccr.Core.Arbiters/PortElementTest.cs \
 
+src/Microsoft.Ccr.Core/PortSet.generated.cs: src/Microsoft.Ccr.Core/make_portset.rb
+	@ruby src/Microsoft.Ccr.Core/make_portset.rb > src/Microsoft.Ccr.Core/PortSet.generated.cs
 
 all: deps Microsoft.Ccr.dll Microsoft.Ccr_test.dll
 

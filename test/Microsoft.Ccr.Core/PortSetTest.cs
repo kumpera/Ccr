@@ -606,4 +606,129 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (10, ps.Test <object> (), "3");
 		}
 	}
+
+	[TestFixture]
+	public class GenericPortSetTest
+	{
+		[Test]
+		public void CtorWithSharedModePort ()
+		{
+			var ps = new PortSet<int, object> (PortSetMode.SharedPort);
+
+			try {
+				var x = ps.P0;
+				Assert.Fail ("#1");
+			} catch (InvalidOperationException) {}
+			try {
+				var x = ps.P1;
+				Assert.Fail ("#2");
+			} catch (InvalidOperationException) {}
+
+			Assert.IsNotNull (ps.SharedPort, "#3");
+		}
+
+		[Test]
+		public void BadCastsUnderSharedMode ()
+		{
+			var ps = new PortSet<int, object> (PortSetMode.SharedPort);
+			ps.PostUnknownType (10);
+
+			try {
+				var port = (Port<int>)ps;
+				Assert.Fail ("#1");
+			} catch (InvalidOperationException) {}
+
+			Assert.AreEqual (10, (int)ps, "#2");
+		}
+
+		[Test]
+		public void PostUnderSharedModeOnlyPostToTheRightPort ()
+		{
+			var ps = new PortSet<int, object> ();
+			var p0 = (IPortReceive)ps.P0;
+
+			ps.Mode = PortSetMode.SharedPort;
+			var psh = (IPortReceive)ps.SharedPort;
+
+			ps.PostUnknownType (10);
+
+			Assert.AreEqual (0, p0.ItemCount, "#1");
+			Assert.AreEqual (1, psh.ItemCount, "#2");
+		}
+
+		[Test]
+		public void ChangePortSetMode ()
+		{
+			var ps = new PortSet<int, object> (PortSetMode.SharedPort);
+			Assert.IsNotNull (ps.SharedPort, "#1");
+			ps.Mode = PortSetMode.Default;
+			Assert.IsNotNull (ps.P0, "#2");
+			Assert.IsNotNull (ps.P1, "#3");
+			Assert.IsNull (ps.SharedPort, "#4");
+		}
+
+		[Test]
+		public void GenericPostUnderSharedMode ()
+		{
+			var ps = new PortSet<int, object> (PortSetMode.SharedPort);
+			var sh = ps.SharedPort;
+			Assert.AreEqual (0, sh.ItemCount, "#1");
+			ps.Post (10);
+			ps.Post ("hello");
+			Assert.AreEqual (2, sh.ItemCount, "#2");
+		}
+
+		[Test]
+		public void PostUnknownType ()
+		{
+			var ps = new PortSet<int, object> ();
+
+			ps.PostUnknownType (10);
+			Assert.AreEqual (1, ps.P0.ItemCount, "#1");
+
+			Assert.IsTrue (ps.TryPostUnknownType ("hello"), "#2");
+			Assert.AreEqual (1, ps.P1.ItemCount, "#3");
+		}
+
+		[Test]
+		public void Indexer ()
+		{
+			var ps = new PortSet<int, object> ();
+			Assert.AreEqual (ps.P0, ps[typeof (int)], "#1");
+			Assert.AreEqual (ps.P1, ps[typeof (object)], "#2");
+		}
+
+		[Test]
+		public void PostUnknownTypeRespectRules ()
+		{
+			var ps0 = new PortSet<object, string> ();
+			var ps1 = new PortSet (typeof (object), typeof (string));
+
+			ps0.PostUnknownType ("hello");
+			ps1.PostUnknownType ("hello");
+
+			Assert.AreEqual (1, ((IPortReceive)ps0 [typeof (string)]).ItemCount, "#1");
+			Assert.AreEqual (1, ((IPortReceive)ps1 [typeof (string)]).ItemCount, "#2");
+		}
+
+		[Test]
+		[Category ("NotDotNet")]
+		public void ICollection ()
+		{
+			var ps = new PortSet<object, string> ();
+
+			Assert.AreEqual (2, ps.Ports.Count, "#1");
+			Assert.IsTrue (ps.Ports.Contains (ps.P0), "#2");
+			Assert.IsTrue (ps.Ports.Contains (ps.P1), "#3");
+
+			ps.Mode = PortSetMode.SharedPort; 
+			var psh = ps.SharedPort;
+ 			/*LAMEIMPL The docs say that this behaves just PortSet::Ports when under SharedPort mode.
+ 			MS doesn't check the mode and tries to return a collection of ports instead of just the shared port. 
+ 			*/
+			Assert.AreEqual (1, ps.Ports.Count, "#4");
+			Assert.IsTrue (ps.Ports.Contains (psh), "#5");
+
+		}
+	}
 }
