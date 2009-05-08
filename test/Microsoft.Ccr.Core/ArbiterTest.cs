@@ -1,5 +1,5 @@
 //
-// Dispatcher.cs
+// ArbiterTest.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,27 +26,15 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Threading;
+using Microsoft.Ccr.Core.Arbiters;
+
+using NUnit.Framework;
 
 namespace Microsoft.Ccr.Core {
 
-	public sealed class Dispatcher : IDisposable
+	[TestFixture]
+	public class ArbiterTest
 	{
-
-
-		~Dispatcher ()
-		{
-			Dispose (false);
-		}
-
-		public void Dispose ()
-		{
-			Dispose (true);
-		}
-
-		void Dispose (bool disposing)
-		{
-			if (disposing)
-				GC.SuppressFinalize (this);
-		}
 	}
 }

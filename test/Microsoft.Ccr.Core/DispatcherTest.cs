@@ -1,5 +1,5 @@
 //
-// Dispatcher.cs
+// DispatcherTest.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -26,27 +26,22 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Threading;
+using Microsoft.Ccr.Core.Arbiters;
+
+using NUnit.Framework;
 
 namespace Microsoft.Ccr.Core {
 
-	public sealed class Dispatcher : IDisposable
+	[TestFixture]
+	public class DispatcherTest
 	{
-
-
-		~Dispatcher ()
+		[Test]
+		public void EmptyCtorSideEffects ()
 		{
-			Dispose (false);
-		}
+			var disp = new Dispatcher ();
 
-		public void Dispose ()
-		{
-			Dispose (true);
-		}
 
-		void Dispose (bool disposing)
-		{
-			if (disposing)
-				GC.SuppressFinalize (this);
 		}
 	}
 }

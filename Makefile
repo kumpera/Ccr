@@ -32,8 +32,10 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/VariableArgumentTask.cs \
 		src/MonoTODOAttribute.cs \
 
-TEST_FILES = test/Microsoft.Ccr.Core/PortTest.cs \
+TEST_FILES = test/Microsoft.Ccr.Core/ArbiterTest.cs \
+			 test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/PortSetTest.cs \
+			 test/Microsoft.Ccr.Core/DispatcherTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
 			 test/Microsoft.Ccr.Core/ReceiverTest.cs \
 			 test/Microsoft.Ccr.Core/TaskTest.cs \
