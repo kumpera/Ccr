@@ -137,9 +137,9 @@ namespace Microsoft.Ccr.Core {
 			return t;
 		}
 
-		class WeirdReceiver<T> : Receiver<T>
+		class WeirdReceiver<T0> : Receiver<T0>
 		{
-			internal WeirdReceiver (Port<T> port, Task<T> task): base (port, null, task) {}
+			internal WeirdReceiver (Port<T0> port, Task<T0> task): base (port, null, task) {}
 
 			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 			{
@@ -289,7 +289,6 @@ namespace Microsoft.Ccr.Core {
 				if (list.Count < count)
 					return null;
 				var res = new IPortElement [count];
-				int idx = 0;
 				for (int i = 0; i < count; ++i) {
 					res [i] = list.First.Value;
 					res [i].Previous = list.Last.Value;

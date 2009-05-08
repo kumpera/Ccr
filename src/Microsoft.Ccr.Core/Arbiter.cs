@@ -36,6 +36,12 @@ namespace Microsoft.Ccr.Core {
 			return new Receiver<T> (persist, port, null, new Task<T> (handler));
 		}
 
+		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler, Predicate<T> predicate)
+		{
+			return new Receiver<T> (persist, port, predicate, new Task<T> (handler));
+		}	
+
+		
 		
 	}
 

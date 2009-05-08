@@ -33,7 +33,6 @@ namespace Microsoft.Ccr.Core {
 	public class Receiver : ReceiverTask
 	{
 		IPortReceive port;
-		ITask task;
 
 		public Receiver (IPortReceive port, ITask task) : this (false, port, task) {}
 
