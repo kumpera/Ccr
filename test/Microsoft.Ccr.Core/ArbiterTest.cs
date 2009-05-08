@@ -36,5 +36,45 @@ namespace Microsoft.Ccr.Core {
 	[TestFixture]
 	public class ArbiterTest
 	{
+		class VoidDispatcherQueue : DispatcherQueue
+		{
+			public int queuedTasks;
+			public ITask lastQueuedTask;
+
+			public override bool Enqueue (ITask task)
+			{
+				++queuedTasks;
+				lastQueuedTask = task;
+				return true;
+			}
+		}
+
+		class SerialDispatchQueue : DispatcherQueue
+		{
+			public override bool Enqueue (ITask task)
+			{
+				task.Execute ();
+				return true;
+			}
+		}
+
+		[Test]
+		public void OneTimeReceive3 ()
+		{
+			int executed = 1;
+			var port = new Port<int> ();
+			Handler<int> handler = (a) => { executed += a; };
+
+			var rec = Arbiter.Receive (false, port, handler);
+			rec.TaskQueue = new SerialDispatchQueue ();
+
+			Assert.AreEqual (0, ((IPortReceive)port).GetReceivers ().Length, "#1");
+			Assert.IsNull (rec.Arbiter, "#2");
+			Assert.IsNull (rec.Predicate, "#3");
+			Assert.AreEqual (ReceiverTaskState.Onetime, rec.State, "#4");
+
+			rec.Consume (new PortElement<int> (10));
+			Assert.AreEqual (11, executed, "#5");
+		}
 	}
 }

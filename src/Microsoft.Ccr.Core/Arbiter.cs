@@ -31,7 +31,12 @@ namespace Microsoft.Ccr.Core {
 
 	public static class Arbiter
 	{
-	
+		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler)
+		{
+			return new Receiver<T> (persist, port, null, new Task<T> (handler));
+		}
+
+		
 	}
 
 }
