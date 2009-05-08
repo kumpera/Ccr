@@ -31,6 +31,100 @@ using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
+	internal static class PortSetHelper
+	{
+		static IPort ResolvePort (object item, Type[] types, IPort[] ports)
+		{
+			if (item == null) {
+				for (int i = 0; i < types.Length; ++i) {
+					if (!types [i].IsValueType)
+						return ports [i];
+				}
+				return null;
+			}
+
+			Type item_type = item.GetType ();
+			int first_match = -1;
+
+			for (int i = 0; i < types.Length; ++i) {
+				if (types [i] == item_type)
+					return ports [i];
+				if (first_match == -1 && types [i].IsAssignableFrom (item_type))
+					first_match = i;
+			}	
+			return first_match >= 0 ? ports [first_match] : null;
+		}
+
+
+		internal static IPort FindPort (Type portType, IPort[] ports, Type[] types, PortSetMode mode)
+		{
+			if (mode != PortSetMode.Default)
+				throw new InvalidOperationException ("Mode is not Default"); 
+			for (int i = 0; i < types.Length; ++i)
+				if (types [i] == portType)
+					return ports [i];
+			return null;
+		}
+		
+		internal static void Post (object item, IPort[] ports, Type[] types, PortSetMode mode, Port<Object> sharedPort)
+		{
+			if (mode == PortSetMode.SharedPort) {
+				sharedPort.Post (item);
+				return;
+			}
+
+			IPort port = ResolvePort (item, types, ports);
+			if (port == null)
+				throw new PortNotFoundException ("item");
+
+			port.PostUnknownType (item);
+		}
+
+		internal static bool TryPost (object item, IPort[] ports, Type[] types, PortSetMode mode, Port<Object> sharedPort)
+		{
+			if (mode == PortSetMode.SharedPort) {
+				sharedPort.Post (item);
+				return true;
+			}
+
+			IPort port = ResolvePort (item, types, ports);
+
+			if (port == null)
+				return false;
+
+			port.PostUnknownType (item);
+			return true;
+		}
+
+		internal static T Test<T> (IPort[] ports, Type[] types, PortSetMode mode, Port<Object> sharedPort)
+		{
+			if (mode == PortSetMode.SharedPort)
+				return (T)sharedPort.Test ();
+
+			IPortReceive p = (IPortReceive)FindPort (typeof (T), ports, types, mode);
+			if (p == null)
+				throw new PortNotFoundException(typeof (T).ToString ());
+			return (T)p.Test ();
+		}
+
+		internal static ICollection<IPort> GetPorts (IPort[] ports, PortSetMode mode, Port<Object> sharedPort)
+		{
+			if (mode == PortSetMode.Default)
+				return Array.AsReadOnly (ports);
+
+			List<IPort> list = new List<IPort> ();
+			list.Add (sharedPort);
+			return list.AsReadOnly ();
+		}
+
+		internal static Port<T> GetPort<T> (PortSetMode mode, Port<T> port)
+		{
+			if (mode != PortSetMode.Default)
+				throw new InvalidOperationException ("Mode is not Default"); 
+			return port;
+		} 
+	}
+
 	public class PortSet : IPortSet, IPort
 	{
 		protected PortSetMode ModeInternal;
@@ -42,19 +136,9 @@ namespace Microsoft.Ccr.Core {
 		{
 		}
 
-		IPort FindPort (Type portType)
-		{
-			if (ModeInternal != PortSetMode.Default)
-				throw new InvalidOperationException ("Mode is not Default"); 
-			for (int i = 0; i < Types.Length; ++i)
-				if (Types [i] == portType)
-					return PortsTable [i];
-			return null;
-		}
-
 		protected Port<TYPE> AllocatePort<TYPE> ()
 		{
-			return (Port<TYPE>) FindPort (typeof (TYPE));
+			return (Port<TYPE>) PortSetHelper.FindPort (typeof (TYPE), PortsTable, Types, ModeInternal);
 		}
 
 		public PortSet (params Type[] types)
@@ -73,69 +157,19 @@ namespace Microsoft.Ccr.Core {
 				this.PortsTable[i] = (IPort)Activator.CreateInstance (typeof (Port<>).MakeGenericType (types [i]));
 		}
 
-		static Type ResolvePort (object item, Type[] types)
-		{
-			if (item == null) {
-				foreach (var t in types) {
-					if (!t.IsValueType)
-						return t;
-				}
-				return null;
-			}
-			Type item_type = item.GetType ();
-			Type first_match = null;
-			foreach (var t in types) {
-				if (t == item_type)
-					return t;
-				if (first_match == null && t.IsAssignableFrom (item_type))
-					first_match = t;
-			}
-			return first_match;
-		}
-
 		public void PostUnknownType (object item)
 		{
-			Type portType;
-
-			if (ModeInternal == PortSetMode.SharedPort) {
-				SharedPortInternal.Post (item);
-				return;
-			}
-
-			portType = ResolvePort (item, Types);
-			if (portType == null)
-				throw new PortNotFoundException ("item");
-
-			this [portType].PostUnknownType (item);
+			PortSetHelper.Post (item, PortsTable, Types, ModeInternal, SharedPortInternal);
 		}
 
 		public bool TryPostUnknownType (object item)
 		{
-			Type portType;
-
-			if (ModeInternal == PortSetMode.SharedPort) {
-				SharedPortInternal.Post (item);
-				return true;
-			}
-
-			portType = ResolvePort (item, Types);
-			if (portType == null)
-				return false;
-
-			this [portType].PostUnknownType (item);
-			return true;
+			return PortSetHelper.TryPost (item, PortsTable, Types, ModeInternal, SharedPortInternal);
 		}
 
 		public T Test<T> ()
 		{
-			if (ModeInternal == PortSetMode.SharedPort) {
-				return (T)SharedPortInternal.Test ();
-			}
-
-			IPortReceive p = (IPortReceive)this[typeof(T)];
-			if (p == null)
-				throw new PortNotFoundException(typeof (T).ToString ());
-			return (T)p.Test ();
+			return PortSetHelper.Test<T> (PortsTable, Types, ModeInternal, SharedPortInternal);
 		}
 
 		public static bool FindTypeFromRuntimeType (object item, Type[] types, out Type portItemType)
@@ -159,7 +193,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			get
 			{
-				return FindPort (portItemType);
+				return PortSetHelper.FindPort (portItemType, PortsTable, Types, ModeInternal);
 			}
 		}
 
@@ -181,12 +215,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			get
 			{
-				if (ModeInternal == PortSetMode.Default)
-					return Array.AsReadOnly (PortsTable);
-
-				List<IPort> list = new List<IPort> ();
-				list.Add (SharedPortInternal);
-				return list.AsReadOnly ();
+				return PortSetHelper.GetPorts (PortsTable, ModeInternal, SharedPortInternal);
 			}
 		}
 
