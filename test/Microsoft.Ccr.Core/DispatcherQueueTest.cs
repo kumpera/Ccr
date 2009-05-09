@@ -26,9 +26,10 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Diagnostics;
 using System.Threading;
-using Microsoft.Ccr.Core.Arbiters;
 
+using Microsoft.Ccr.Core.Arbiters;
 using NUnit.Framework;
 
 namespace Microsoft.Ccr.Core {
@@ -470,6 +471,51 @@ namespace Microsoft.Ccr.Core {
 			
 			DispatcherQueue dq = new DispatcherQueue ();
 			Assert.IsTrue (dq.Enqueue (t), "#1");
+		}
+
+		class NakedDispatcher : DispatcherQueue
+		{
+			public override bool Enqueue (ITask task)
+			{
+				//Console.WriteLine ("\n---Enqueue---\n");
+				throw new Exception ("not now");
+			}
+
+			public override bool TryDequeue (out ITask task)
+			{
+				 //Console.WriteLine ("\n---TryDequeue2 {0} -- {1}---\n", DateTime.Now.Ticks, new StackTrace (1));
+				 return base.TryDequeue (out task);
+			}
+
+			public override void Suspend ()
+			{
+				Console.WriteLine ("\n---Suspend---\n");
+				throw new Exception ("not now");
+			}
+
+			public override void Resume ()
+			{
+				Console.WriteLine ("\n---Resume---\n");
+				throw new Exception ("not now");
+			}
+
+			public NakedDispatcher (Dispatcher d) : base ("bla", d) {}
+
+			public bool _Enqueue (ITask task)
+			{
+				return base.Enqueue (task);
+			}
+		}
+
+		[Test]
+		public void HowTheDispatcherWork ()
+		{
+			AutoResetEvent evt = new AutoResetEvent (false);
+			using (Dispatcher d = new Dispatcher ()) {
+				var disp = new  NakedDispatcher (d); 
+				disp._Enqueue (new Task (() => { evt.Set (); }));
+				evt.WaitOne ();
+			}
 		}
 	}
 }

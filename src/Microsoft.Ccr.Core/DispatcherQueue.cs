@@ -26,6 +26,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
 using System.Xml.Serialization;
 
 namespace Microsoft.Ccr.Core {
@@ -35,6 +36,10 @@ namespace Microsoft.Ccr.Core {
 		Dispatcher dispatcher;
 		bool suspended;
 		long scheduledItems;
+		LinkedList<ITask> queue = new LinkedList<ITask> ();
+		object _lock = new object ();
+
+		internal object DispatcherObject { get; set; }
 
 		void ConfigureDefaults ()
 		{
@@ -58,7 +63,9 @@ namespace Microsoft.Ccr.Core {
 			Timescale = 1;
 	
 			Policy = policy;
+			dispatcher.Register (this);
 		}
+
 
 		public DispatcherQueue () : this ("Unnamed queue using Threadpool") {}
 
@@ -101,6 +108,7 @@ namespace Microsoft.Ccr.Core {
 			Dispose (false);
 		}
 
+		[MonoTODO ("Implement proper dispose semantics and checks")]
 		public void Dispose ()
 		{
 			Dispose (true);
@@ -124,7 +132,7 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
-		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
+		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual bool Enqueue (ITask task)
 		{
 			if (dispatcher == null) {
@@ -132,17 +140,37 @@ namespace Microsoft.Ccr.Core {
 				
 				++scheduledItems;
 				return x.BeginInvoke (task, null, null) != null;
-			} else
-				throw new NotImplementedException ();
+			} else {
+				lock (_lock) {
+					queue.AddLast (task);
+					dispatcher.Notify (this);
+					return true;//?
+				}
+			}
 		}
 
-		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
+		[MonoTODO ("doesn't work constrained policies")]
+		public virtual bool TryDequeue (out ITask task)
+		{
+			lock (_lock) {
+				if (queue.Count == 0) {
+					task = null;
+					return false;
+				}
+				task = queue.First.Value;
+				queue.RemoveFirst ();
+				return true;
+			}
+		}
+
+
+		[MonoTODO ("doesn't work with dispatcher or constrained policies")]
 		public virtual void Suspend ()
 		{
 			suspended = true;
 		}
 
-		[MonoTODO ("doesn't work with dispatcher or unconstrained policies")]
+		[MonoTODO ("doesn't work with dispatcher or constrained policies")]
 		public virtual void Resume ()
 		{
 			suspended = false;
