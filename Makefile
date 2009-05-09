@@ -20,6 +20,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/IPortReceive.cs \
 		src/Microsoft.Ccr.Core/IPortSet.cs \
 		src/Microsoft.Ccr.Core/ITask.cs \
+		src/Microsoft.Ccr.Core/IterativeTasks.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
 		src/Microsoft.Ccr.Core/PortNotFoundException.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
@@ -35,6 +36,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/MonoTODOAttribute.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/ArbiterTest.cs \
+			 test/Microsoft.Ccr.Core/IterativeTaskTest.cs \
 			 test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/PortSetTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherTest.cs \
