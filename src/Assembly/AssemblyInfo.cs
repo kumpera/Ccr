@@ -37,5 +37,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion ("2.0.913.0")]
 [assembly: AssemblyDelaySign (true)]
 [assembly: AssemblyKeyFile ("ccr.core.pub")]
+[assembly: AllowPartiallyTrustedCallers]
+[assembly: AssemblyCopyright ("Rodrigo Kumpera. Distributed under the MIT/BSD.")]
+[assembly: AssemblyProduct ("Microsoft.Core.Ccr")]
+[assembly: AssemblyTrademark ("N/A")]
+[assembly: AssemblyCompany ("N/A")]
+[assembly: ComVisible (false)]
+[assembly: CLSCompliant (true)]
 
 
