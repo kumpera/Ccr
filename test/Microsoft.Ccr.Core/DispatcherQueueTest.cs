@@ -473,6 +473,29 @@ namespace Microsoft.Ccr.Core {
 			Assert.IsTrue (dq.Enqueue (t), "#1");
 		}
 
+		class NakedTaskQueueTask : Task, ITask {
+			public bool getQueue, setQueue;
+			public DispatcherQueue queue;
+
+			public NakedTaskQueueTask () : base (() => {}) {}
+
+			DispatcherQueue ITask.TaskQueue {
+				get { getQueue = true; return queue; }
+				set { queue = value; setQueue = true; }
+			}
+		}
+
+		[Test]
+		public void EnqueueSetTheTaskQueueProperty ()
+		{
+			DispatcherQueue dq = new DispatcherQueue ();
+			var task = new NakedTaskQueueTask ();
+			dq.Enqueue (task);
+			Assert.IsTrue (task.setQueue, "#1");
+			Assert.AreEqual (dq, task.queue, "#2");
+			Assert.IsFalse (task.getQueue, "#3");
+		}
+
 		class NakedDispatcher : DispatcherQueue
 		{
 			public override bool Enqueue (ITask task)

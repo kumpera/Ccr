@@ -111,16 +111,13 @@ namespace Microsoft.Ccr.Core
 
 		internal ITask Dequeue ()
 		{
-			if (!active)
-				return null;
 			lock (_lock) {
 				ITask task = null;
-				while (!queue.TryDequeue (out task))
+				while (active &&!queue.TryDequeue (out task))
 					Monitor.Wait (_lock);
 				return task;
 			}
 		}
-
 
 		internal void Shutdown ()
 		{

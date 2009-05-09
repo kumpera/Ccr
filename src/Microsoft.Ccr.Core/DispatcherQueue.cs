@@ -135,6 +135,7 @@ namespace Microsoft.Ccr.Core {
 		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual bool Enqueue (ITask task)
 		{
+			task.TaskQueue = this;
 			if (dispatcher == null) {
 				Handler<ITask> x = DispatchTask;
 				
