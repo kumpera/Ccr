@@ -25,6 +25,8 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
 		src/Microsoft.Ccr.Core/PortSet.generated.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
+		src/Microsoft.Ccr.Core/SuccessResult.cs \
+		src/Microsoft.Ccr.Core/SuccessFailurePort.cs \
 		src/Microsoft.Ccr.Core/Tasks.cs \
 		src/Microsoft.Ccr.Core/TaskCommon.cs \
 		src/Microsoft.Ccr.Core/TaskExecutionPolicy.cs \

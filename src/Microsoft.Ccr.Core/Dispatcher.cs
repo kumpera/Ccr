@@ -76,6 +76,9 @@ namespace Microsoft.Ccr.Core
 		readonly List<CcrWorker> worker = new List<CcrWorker> ();
 		bool active = true;
 		readonly internal Dispatcher dispatcher;
+		int pendingTasks;
+
+		const int MAX_WORKERS = 4;
 
 		internal QueueMediator (Dispatcher dispatcher, DispatcherQueue queue)
 		{
@@ -105,16 +108,20 @@ namespace Microsoft.Ccr.Core
 		internal void Notify ()
 		{
 			lock (_lock) {
+				if (pendingTasks > 0 && worker.Count < MAX_WORKERS)
+					SpawnWorker ();
+				++pendingTasks;
 				Monitor.Pulse (_lock);
-			}	
+			}
 		}
 
 		internal ITask Dequeue ()
 		{
 			lock (_lock) {
 				ITask task = null;
-				while (active &&!queue.TryDequeue (out task))
+				while (active && !queue.TryDequeue (out task))
 					Monitor.Wait (_lock);
+				--pendingTasks;
 				return task;
 			}
 		}
