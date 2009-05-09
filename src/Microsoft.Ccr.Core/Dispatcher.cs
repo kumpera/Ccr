@@ -100,14 +100,12 @@ namespace Microsoft.Ccr.Core
 			}
 		}
 
-		internal void Start ()
-		{
-			SpawnWorker ();
-		}
 
 		internal void Notify ()
 		{
 			lock (_lock) {
+				if (worker.Count == 0)
+					SpawnWorker ();
 				if (pendingTasks > 0 && worker.Count < MAX_WORKERS)
 					SpawnWorker ();
 				++pendingTasks;
@@ -159,7 +157,6 @@ namespace Microsoft.Ccr.Core
 				QueueMediator qm = new QueueMediator (this, queue);
 				queue.DispatcherObject = qm;
 				queues.Add (qm);
-				qm.Start ();
 			}
 		}
 
