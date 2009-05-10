@@ -137,16 +137,6 @@ namespace Microsoft.Ccr.Core {
 			return t;
 		}
 
-		class WeirdReceiver<T0> : Receiver<T0>
-		{
-			internal WeirdReceiver (Port<T0> port, Task<T0> task): base (port, null, task) {}
-
-			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
-			{
-				base.Evaluate (messageNode, ref deferredTask);
-				return false;
-			}
-		}
 
 		public static implicit operator Receiver<T> (Port<T> port)
 		{

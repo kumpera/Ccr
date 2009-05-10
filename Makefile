@@ -22,6 +22,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/ITask.cs \
 		src/Microsoft.Ccr.Core/IterativeTasks.cs \
 		src/Microsoft.Ccr.Core/Port.cs \
+		src/Microsoft.Ccr.Core/PortExtensions.cs \
 		src/Microsoft.Ccr.Core/PortNotFoundException.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
 		src/Microsoft.Ccr.Core/PortSet.generated.cs \
@@ -37,6 +38,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/ArbiterTest.cs \
 			 test/Microsoft.Ccr.Core/IterativeTaskTest.cs \
+			 test/Microsoft.Ccr.Core/PortExtensionsTest.cs \
 			 test/Microsoft.Ccr.Core/PortTest.cs \
 			 test/Microsoft.Ccr.Core/PortSetTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherTest.cs \
