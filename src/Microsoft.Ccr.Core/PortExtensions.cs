@@ -34,6 +34,8 @@ namespace Microsoft.Ccr.Core {
 	{
 		internal WeirdReceiver (Port<T0> port, Task<T0> task): base (port, null, task) {}
 
+		internal WeirdReceiver (Port<T0> port, Predicate<T0> pred, Task<T0> task): base (port, pred, task) {}
+
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
 			base.Evaluate (messageNode, ref deferredTask);
@@ -44,12 +46,27 @@ namespace Microsoft.Ccr.Core {
 
 	public static class PortExtensions 
 	{
-
 		public static Receiver Receive<T> (this Port<T> port)
 		{
 			Receiver<T> res = null;
 			Task<T> task = new Task<T> ((_unused) => res.Cleanup ());
 			res = new WeirdReceiver<T> (port, task);
+			return res;
+		}
+
+		public static Receiver Receive<T> (Port<T> port, Handler<T> handler)
+		{
+			Receiver<T> res = null;
+			Task<T> task = new Task<T> (handler);
+			res = new WeirdReceiver<T> (port, null, task);
+			return res;
+		}
+
+		public static Receiver Receive<T> (Port<T> port, Handler<T> handler, Predicate<T> predicate)
+		{
+			Receiver<T> res = null;
+			Task<T> task = new Task<T> (handler);
+			res = new WeirdReceiver<T> (port, predicate, task);
 			return res;
 		}
 	}
