@@ -106,31 +106,6 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (null, ir.Test (), "#1");			
 		}
 
-		class MyReceiver : ReceiverTask
-		{
-			int id;
-			ITask task;
-
-			public MyReceiver (int id, ITask task) { this.id = id; this.task = task; }
-	
-			public override void Cleanup (ITask taskToCleanup)
-			{
-				Console.WriteLine ("{0} Cleanup {1}", id, taskToCleanup );
-			}
-	
-			public override void Consume (IPortElement item)
-			{
-				Console.WriteLine ("{0} Consume {1} ", id, item);
-			}
-	
-			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
-			{
-				Console.WriteLine ("\n{0} Evaluate {1} {2}", id, messageNode, deferredTask);
-				deferredTask = this.task;
-				return true;
-			}
-		}
-
 		class MyTask : ITask
 		{
 			public ITask PartialClone ()
@@ -802,7 +777,47 @@ namespace Microsoft.Ccr.Core {
 			port.Post (10);
 			Assert.AreEqual (1, dq1.queuedTasks, "#5");
 			Assert.AreEqual (1, ipr.GetReceivers ().Length, "#6");
+		}
 
+
+		class MyReceiver : ReceiverTask
+		{
+			int id;
+			ITask task;
+			public int consume = 0;
+			public int eval = 0;
+
+			public MyReceiver (int id, ITask task) { this.id = id; this.task = task; }
+	
+			public override void Cleanup (ITask taskToCleanup)
+			{
+			}
+	
+			public override void Consume (IPortElement item)
+			{
+				++consume;
+			}
+	
+			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+			{
+				++eval;
+				return true;
+			}
+		}
+
+		[Test]
+		public void OptimizedSingleReissueReceiver ()
+		{
+			Port<int> p = new Port <int> ();
+			p.Mode = PortMode.OptimizedSingleReissueReceiver;
+			var rec = new MyReceiver (10, Arbiter.FromHandler (() =>{}));
+			rec.State = ReceiverTaskState.Persistent;
+
+			((IPortReceive)p).RegisterReceiver (rec);
+			p.Post (10);
+			Assert.AreEqual (0, rec.eval, "#1");
+			Assert.AreEqual (1, rec.consume, "#2");
+			Assert.AreEqual (0, p.ItemCount, "#3");
 		}
 	}
 }

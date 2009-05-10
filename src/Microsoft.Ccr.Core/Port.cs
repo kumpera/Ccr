@@ -45,6 +45,11 @@ namespace Microsoft.Ccr.Core {
 		void Push (bool front, PortElement<T> elem)
 		{
 			lock (_lock) {
+				if (mode == PortMode.OptimizedSingleReissueReceiver) {
+					receivers.First.Value.Consume (elem);
+					return;
+				}
+
 				for (var node = receivers.First; node != null; node = node.Next) {
 					ReceiverTask rt = node.Value;
 
@@ -299,7 +304,6 @@ namespace Microsoft.Ccr.Core {
 		public PortMode Mode
 		{
 			get { return mode; }
-			[MonoTODO ("No optimization is done under OptimizedSingleReissueReceiver")]
 			set { mode = value; }
 		}
 	}
