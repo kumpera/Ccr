@@ -44,6 +44,7 @@ TEST_FILES = test/Microsoft.Ccr.Core/ArbiterTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherTest.cs \
 			 test/Microsoft.Ccr.Core/DispatcherQueueTest.cs \
 			 test/Microsoft.Ccr.Core/ReceiverTest.cs \
+			 test/Microsoft.Ccr.Core/SuccessResultTest.cs \
 			 test/Microsoft.Ccr.Core/TaskTest.cs \
 			 test/Microsoft.Ccr.Core/VariableArgumentTaskTest.cs \
 			 test/Microsoft.Ccr.Core.Arbiters/PortElementTest.cs \

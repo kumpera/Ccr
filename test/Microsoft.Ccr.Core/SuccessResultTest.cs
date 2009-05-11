@@ -1,5 +1,5 @@
 //
-// SuccessResult.cs
+// SuccessResultTest.cs
 //
 // Author:
 //   Rodrigo Kumpera  <kumpera@gmail.com>
@@ -29,31 +29,19 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Ccr.Core.Arbiters;
 
+using NUnit.Framework;
+
 namespace Microsoft.Ccr.Core {
 
-	public class SuccessResult
+	[TestFixture]
+	public class SuccessResultTest
 	{
-		static SuccessResult instance = new SuccessResult ();
-		int status;
-		string statusMessage;
-
-		public SuccessResult () {}
-		public SuccessResult (int status)
+		[Test]
+		public void SharedInstance ()
 		{
-			this.status = status;
-		}
-
-		public SuccessResult (string status)
-		{
-			this.statusMessage = status;
-		}
-
-		public int Status { get { return status; } }
-		public string StatusMessage { get { return statusMessage; } }
-
-		public static SuccessResult Instance
-		{
-			get { return instance; }
+			var sr = SuccessResult.Instance;
+			Assert.AreEqual (0, sr.Status, "#1");
+			Assert.IsNull (sr.StatusMessage, "#2");
 		}
 	}
 }
