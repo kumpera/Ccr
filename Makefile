@@ -9,6 +9,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/PortSetMode.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTaskState.cs \
+		src/Microsoft.Ccr.Core/Causality.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
 		src/Microsoft.Ccr.Core/DispatcherOptions.cs \
 		src/Microsoft.Ccr.Core/DispatcherQueue.cs \
