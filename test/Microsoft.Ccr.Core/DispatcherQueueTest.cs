@@ -26,6 +26,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
@@ -493,7 +494,6 @@ namespace Microsoft.Ccr.Core {
 			dq.Enqueue (task);
 			Assert.IsTrue (task.setQueue, "#1");
 			Assert.AreEqual (dq, task.queue, "#2");
-			Assert.IsFalse (task.getQueue, "#3");
 		}
 
 		class NakedDispatcher : DispatcherQueue
@@ -537,7 +537,37 @@ namespace Microsoft.Ccr.Core {
 			using (Dispatcher d = new Dispatcher ()) {
 				var disp = new  NakedDispatcher (d); 
 				disp._Enqueue (new Task (() => { evt.Set (); }));
-				evt.WaitOne ();
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+			}
+		}
+
+		Port<int> iterPort;
+		AutoResetEvent iterEvent;
+		int iterRes;
+
+		IEnumerator<ITask> SimpleTaskIterator ()
+		{
+			for (int i = 0; i < 5; ++i) {
+				yield return iterPort.Receive ();
+				iterRes += iterPort;
+			}
+			iterEvent.Set ();
+		}
+
+		[Test]
+		public void DispatchOfIterativeTask ()
+		{
+			iterPort = new Port<int> ();
+			iterEvent = new AutoResetEvent (false);
+			iterRes = 0;
+
+			using (Dispatcher d = new Dispatcher ()) {
+				var disp = new DispatcherQueue ("bla", d); 
+				disp.Enqueue (new IterativeTask (this.SimpleTaskIterator));
+				for (int i = 0; i < 5; ++i)
+					iterPort.Post (i * 10);
+				Assert.IsTrue (iterEvent.WaitOne (2000), "#1");
+				Assert.AreEqual (100, iterRes, "#2");
 			}
 		}
 	}

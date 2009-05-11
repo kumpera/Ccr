@@ -31,6 +31,50 @@ using System.Threading;
 
 namespace Microsoft.Ccr.Core
 {
+	class IteratorData
+	{
+		IEnumerator<ITask> iterator;
+
+		internal IteratorData (IEnumerator<ITask> iterator)
+		{
+			this.iterator = iterator;
+		}
+
+		internal void Begin (DispatcherQueue queue)
+		{
+			try {
+				if (iterator.MoveNext ()) {
+					ITask task = iterator.Current;
+					task.LinkedIterator = this;
+					queue.Enqueue (task);
+				}
+			} catch (Exception ex) {
+				this.iterator.Dispose ();
+				this.iterator = null;
+				//TODO post it somewhere
+			}
+		}
+
+		internal void Step (ITask task, DispatcherQueue queue)
+		{
+			try {
+				IEnumerator<ITask> nested = task.Execute ();
+				if (nested != null)
+					Console.WriteLine ("OMG, what now?");
+
+				if (iterator.MoveNext ()) {
+					task = iterator.Current;
+					task.LinkedIterator = this;
+					queue.Enqueue (task);
+				}
+			}  catch (Exception ex) {
+				this.iterator.Dispose ();
+				this.iterator = null;
+				//TODO post it somewhere
+			}
+		}
+	}
+
 	class CcrWorker
 	{
 		readonly QueueMediator mediator;
@@ -47,6 +91,21 @@ namespace Microsoft.Ccr.Core
 			thread.Start ();
 		}
 
+		void RunTask (ITask task)
+		{
+			object obj = task.LinkedIterator;
+			if (obj != null) {
+				IteratorData id = (IteratorData)obj;
+				id.Step (task, mediator.queue);
+			} else {
+				var iter = task.Execute ();
+				if (iter != null) {
+					IteratorData id = new IteratorData (iter);
+					id.Begin (mediator.queue);
+				}
+			}
+		}
+
 		void Run ()
 		{
 			Dispatcher disp = mediator.dispatcher;
@@ -61,9 +120,10 @@ namespace Microsoft.Ccr.Core
 				try {
 					if (task == null)
 						continue;
-					task.Execute ();
+					RunTask (task);
 				} catch (Exception e) {
 					Console.WriteLine ("please fix me");
+					//TODO post it somewhere
 				}
 			}
 		}
@@ -72,7 +132,7 @@ namespace Microsoft.Ccr.Core
 	class QueueMediator
 	{
 		readonly object _lock = new object ();
-		readonly DispatcherQueue queue;
+		internal readonly DispatcherQueue queue;
 		readonly List<CcrWorker> worker = new List<CcrWorker> ();
 		bool active = true;
 		readonly internal Dispatcher dispatcher;
