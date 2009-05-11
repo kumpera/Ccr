@@ -782,12 +782,17 @@ namespace Microsoft.Ccr.Core {
 
 		class MyReceiver : ReceiverTask
 		{
-			int id;
 			ITask task;
 			public int consume = 0;
 			public int eval = 0;
+			bool eval_res;
 
-			public MyReceiver (int id, ITask task) { this.id = id; this.task = task; }
+			public MyReceiver (ITask task) : this (true, task) {}
+			public MyReceiver (bool eval_res, ITask task)
+			{
+				this.task = task;
+				this.eval_res = eval_res;
+			}
 	
 			public override void Cleanup (ITask taskToCleanup)
 			{
@@ -801,7 +806,7 @@ namespace Microsoft.Ccr.Core {
 			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 			{
 				++eval;
-				return true;
+				return eval_res;
 			}
 		}
 
@@ -810,7 +815,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			Port<int> p = new Port <int> ();
 			p.Mode = PortMode.OptimizedSingleReissueReceiver;
-			var rec = new MyReceiver (10, Arbiter.FromHandler (() =>{}));
+			var rec = new MyReceiver (Arbiter.FromHandler (() =>{}));
 			rec.State = ReceiverTaskState.Persistent;
 
 			((IPortReceive)p).RegisterReceiver (rec);
@@ -818,6 +823,83 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (0, rec.eval, "#1");
 			Assert.AreEqual (1, rec.consume, "#2");
 			Assert.AreEqual (0, p.ItemCount, "#3");
+		}
+
+		[Test]
+		public void NewReceiverGetAChancewithCurrentItems1 ()
+		{
+			Port<int> p = new Port <int> ();
+			var receiver = new MyReceiver ( Arbiter.FromHandler (() =>{}));
+			p.Post (10);
+			p.Post (20);
+			p.Post (30);
+
+			IPortReceive pr = p;
+			pr.RegisterReceiver (receiver); 
+
+			Assert.AreEqual (1, receiver.eval, "#1");
+			Assert.AreEqual (2, p.ItemCount, "#2");
+		}
+		
+		[Test]
+		public void NewReceiverGetAChancewithCurrentItems2 ()
+		{
+			Port<int> p = new Port <int> ();
+			var receiver = new MyReceiver ( Arbiter.FromHandler (() =>{}));
+			receiver.State = ReceiverTaskState.Persistent;
+
+			p.Post (10);
+			p.Post (20);
+			p.Post (30);
+
+			IPortReceive pr = p;
+			pr.RegisterReceiver (receiver); 
+
+			Assert.AreEqual (3, receiver.eval, "#1");
+			Assert.AreEqual (0, p.ItemCount, "#2");
+		}
+
+		[Test]
+		public void NewReceiverGetAChancewithCurrentItems3 ()
+		{
+			Port<int> p = new Port <int> ();
+			var receiver = new MyReceiver (false, Arbiter.FromHandler (() =>{}));
+			receiver.State = ReceiverTaskState.Persistent;
+
+			p.Post (10);
+			p.Post (20);
+			p.Post (30);
+
+			IPortReceive pr = p;
+			pr.RegisterReceiver (receiver);
+
+			Assert.AreEqual (3, receiver.eval, "#1");
+			Assert.AreEqual (3, p.ItemCount, "#2");
+		}
+
+		[Test]
+		public void NewReceiverGetAChancewithCurrentItems4 ()
+		{
+			Port<int> p = new Port <int> ();
+			var r0 = new MyReceiver (false, Arbiter.FromHandler (() =>{}));
+			r0.State = ReceiverTaskState.Persistent;
+			IPortReceive pr = p;
+			pr.RegisterReceiver (r0);
+
+
+			p.Post (10);
+			p.Post (20);
+			p.Post (30);
+
+			Assert.AreEqual (3, p.ItemCount, "#1");
+
+			var r1 = new MyReceiver (false, Arbiter.FromHandler (() =>{}));
+			r1.State = ReceiverTaskState.Persistent;
+			pr.RegisterReceiver (r1);
+
+			Assert.AreEqual (3, r0.eval, "#2");
+			Assert.AreEqual (3, r1.eval, "#3");
+			Assert.AreEqual (3, p.ItemCount, "#4");
 		}
 	}
 }

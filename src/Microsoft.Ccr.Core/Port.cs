@@ -221,6 +221,39 @@ namespace Microsoft.Ccr.Core {
 				throw new ArgumentNullException ("receiver");
 			lock (_lock) {
 				this.receivers.AddLast (receiver);
+
+				for (var node = list.First; node != null;) {
+					PortElement<T> element = node.Value;
+
+					ITask task = null; 
+					bool res = receiver.Evaluate (element, ref task);
+					if (task != null) {
+						DispatcherQueue dq = receiver.TaskQueue;
+						if (dq != null)
+							dq.Enqueue (task);
+					}
+
+					if (res) {
+						if (list.Count > 0) {
+							PortElement<T> prev = node == list.First ? list.Last.Value : node.Previous.Value;
+							PortElement<T> next = node == list.Last ? list.First.Value : node.Next.Value;
+							prev.Next = next;
+							next.Previous = prev;
+						}
+						var tmp = node.Next;
+						list.Remove (node);
+						node = tmp;
+
+						if (receiver.State != ReceiverTaskState.Persistent) {
+							receivers.Remove (receiver);
+							return;
+						}
+					} else {
+						node = node.Next;
+					}
+				}
+
+
 			}
 		}
 

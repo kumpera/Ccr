@@ -74,5 +74,28 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (ReceiverTaskState.CleanedUp, receiver.State, "#9");
 			Assert.AreEqual (0, rec.GetReceivers ().Length, "#10");
 		}
+
+
+		[Test]
+		public void ReceiveWithElementOnThePort ()
+		{
+			Port<int> port = new Port<int> ();
+			IPortReceive portRec = port;
+			port.Post (10);
+
+			var receiver = port.Receive ();	
+			var dq = new VoidDispatcherQueue ();	
+			receiver.TaskQueue = dq;
+
+			Assert.IsNull (receiver.Arbiter, "#1");
+			Assert.AreEqual (ReceiverTaskState.Onetime, receiver.State, "#2");
+
+			Assert.IsNull (receiver.Execute (), "#3");
+			Assert.AreEqual (ReceiverTaskState.Onetime, receiver.State, "#4");
+
+			IPortReceive rec = port;
+			Assert.AreEqual (1, rec.GetReceivers ().Length, "#5");
+
+		}
 	}
 }
