@@ -158,7 +158,7 @@ namespace Microsoft.Ccr.Core {
 
 		public override string ToString ()
 		{
-			return String.Format ("{0} with param0 {1} param1 {2}", typeof (Task<T0>), Param0, Param1);
+			return String.Format ("{0} with param0 {1} param1 {2}", typeof (Task<T0, T1>), Param0, Param1);
 		}
 
 		[DebuggerStepThrough]
@@ -236,7 +236,7 @@ namespace Microsoft.Ccr.Core {
 
 		public override string ToString ()
 		{
-			return String.Format ("{0} with param0 {1} param1 {2} param2 {3}", typeof (Task<T0>), Param0, Param1, Param2);
+			return String.Format ("{0} with param0 {1} param1 {2} param2 {3}", typeof (Task<T0, T1, T2>), Param0, Param1, Param2);
 		}
 
 		[DebuggerStepThrough]
