@@ -543,7 +543,7 @@ namespace Microsoft.Ccr.Core {
 
 		class MyReceiver : Receiver<int> {
 			Port<int> port;
-			public MyReceiver (Port<int> p) : base (p, null, null) { this.port = p; }
+			public MyReceiver (Port<int> p) : base (p, null, (Task<int>)null) { this.port = p; }
 
 			public override IEnumerator<ITask> Execute ()
 			{

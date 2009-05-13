@@ -103,7 +103,17 @@ namespace Microsoft.Ccr.Core {
 			Predicate = predicate;
 		}
 
+		public Receiver (IPortReceive port, Predicate<T> predicate, IterativeTask<T> task) : base (port, task)
+		{
+			Predicate = predicate;
+		}
+
 		public Receiver (bool persist, IPortReceive port, Predicate<T> predicate, Task<T> task) : base (persist, port, task)
+		{
+			Predicate = predicate;
+		}
+
+		public Receiver (bool persist, IPortReceive port, Predicate<T> predicate, IterativeTask<T> task) : base (persist, port, task)
 		{
 			Predicate = predicate;
 		}

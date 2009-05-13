@@ -32,7 +32,7 @@ using Microsoft.Ccr.Core.Arbiters;
 namespace Microsoft.Ccr.Core {
 	class WeirdReceiver<T0> : Receiver<T0>
 	{
-		internal WeirdReceiver (Port<T0> port): base (port, null, null) {}
+		internal WeirdReceiver (Port<T0> port): base (port, null, (Task<T0>)null) {}
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{

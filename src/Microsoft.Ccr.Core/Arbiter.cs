@@ -46,6 +46,11 @@ namespace Microsoft.Ccr.Core {
 			return new Task (handler);
 		}
 		
+		public static ITask FromHandler (IteratorHandler handler)
+		{
+			return new IterativeTask (handler);
+		}
+
 		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler)
 		{
 			return new Receiver<T> (persist, port, null, new Task<T> (handler));
@@ -54,6 +59,16 @@ namespace Microsoft.Ccr.Core {
 		public static Receiver<T> Receive<T> (bool persist, Port<T> port, Handler<T> handler, Predicate<T> predicate)
 		{
 			return new Receiver<T> (persist, port, predicate, new Task<T> (handler));
+		}
+
+		public static Receiver<T> ReceiveWithIterator<T> (bool persist, Port<T> port, IteratorHandler<T> handler)
+		{
+			return new Receiver<T> (persist, port, null, new IterativeTask<T> (handler));
+		}
+
+		public static Receiver<T> ReceiveWithIterator<T> (bool persist, Port<T> port, IteratorHandler<T> handler, Predicate<T> predicate)
+		{
+			return new Receiver<T> (persist, port, predicate, new IterativeTask<T> (handler));
 		}
 
 		public static Receiver<T> ReceiveFromPortSet<T> (bool persist, IPortSet portSet, Handler<T> handler)
@@ -66,6 +81,15 @@ namespace Microsoft.Ccr.Core {
 			return new Receiver<T> (persist, (IPortReceive)portSet [typeof (T)], predicate, new Task<T> (handler));
 		}
 
+		public static Receiver<T> ReceiveWithIteratorFromPortSet<T> (bool persist, IPortSet portSet, IteratorHandler<T> handler)
+		{
+			return new Receiver<T> (persist, (IPortReceive)portSet [typeof (T)], null, new IterativeTask<T> (handler));
+		}
+
+		public static Receiver<T> ReceiveWithIteratorFromPortSet<T> (bool persist, IPortSet portSet, IteratorHandler<T> handler, Predicate<T> predicate)
+		{
+			return new Receiver<T> (persist, (IPortReceive)portSet [typeof (T)], predicate, new IterativeTask<T> (handler));
+		}
 	}
 
 }
