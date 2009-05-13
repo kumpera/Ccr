@@ -144,9 +144,9 @@ namespace Microsoft.Ccr.Core {
 			} else {
 				lock (_lock) {
 					queue.AddLast (task);
-					dispatcher.Notify (this);
-					return true;//?
 				}
+				dispatcher.Notify (this);
+				return true;//?
 			}
 		}
 

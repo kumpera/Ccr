@@ -51,6 +51,7 @@ namespace Microsoft.Ccr.Core
 			} catch (Exception ex) {
 				this.iterator.Dispose ();
 				this.iterator = null;
+				Console.WriteLine (ex);
 				//TODO post it somewhere
 			}
 		}
@@ -70,6 +71,7 @@ namespace Microsoft.Ccr.Core
 			}  catch (Exception ex) {
 				this.iterator.Dispose ();
 				this.iterator = null;
+				Console.WriteLine (ex);
 				//TODO post it somewhere
 			}
 		}
@@ -122,7 +124,7 @@ namespace Microsoft.Ccr.Core
 						continue;
 					RunTask (task);
 				} catch (Exception e) {
-					Console.WriteLine ("please fix me");
+					Console.WriteLine ("please fix me {0}", e);
 					//TODO post it somewhere
 				}
 			}
@@ -134,7 +136,7 @@ namespace Microsoft.Ccr.Core
 		readonly object _lock = new object ();
 		internal readonly DispatcherQueue queue;
 		readonly List<CcrWorker> worker = new List<CcrWorker> ();
-		bool active = true;
+		volatile bool active = true;
 		readonly internal Dispatcher dispatcher;
 		int pendingTasks;
 
