@@ -145,10 +145,7 @@ namespace Microsoft.Ccr.Core {
 
 		public static implicit operator Receiver<T> (Port<T> port)
 		{
-			Receiver<T> res = null;
-			Task<T> task = new Task<T> ((_unused) => res.Cleanup ());
-			res = new WeirdReceiver<T> (port, task);
-			return res;
+			return new WeirdReceiver<T> (port);
 		}
 		//IPort
 

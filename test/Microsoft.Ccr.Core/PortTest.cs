@@ -710,6 +710,7 @@ namespace Microsoft.Ccr.Core {
 			receiver.TaskQueue = dq;
 
 			Assert.IsNull (receiver.Arbiter, "#1");
+			Assert.IsNull (receiver.ArbiterCleanupHandler, "#1.1");
 			Assert.AreEqual (ReceiverTaskState.Onetime, receiver.State, "#2");
 			Assert.IsNull (receiver.Execute (), "#3");
 			Assert.AreEqual (ReceiverTaskState.Onetime, receiver.State, "#4");

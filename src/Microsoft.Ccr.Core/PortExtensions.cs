@@ -32,13 +32,15 @@ using Microsoft.Ccr.Core.Arbiters;
 namespace Microsoft.Ccr.Core {
 	class WeirdReceiver<T0> : Receiver<T0>
 	{
-		internal WeirdReceiver (Port<T0> port, Task<T0> task): base (port, null, task) {}
-
-		internal WeirdReceiver (Port<T0> port, Predicate<T0> pred, Task<T0> task): base (port, pred, task) {}
+		internal WeirdReceiver (Port<T0> port): base (port, null, null) {}
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
 			base.Evaluate (messageNode, ref deferredTask);
+			Task t = new Task (this.Cleanup);
+			t.LinkedIterator = this.LinkedIterator;
+			t.TaskQueue = this.TaskQueue;
+			deferredTask = t;
 			return false;
 		}
 	}
@@ -49,8 +51,7 @@ namespace Microsoft.Ccr.Core {
 		public static Receiver Receive<T> (this Port<T> port)
 		{
 			Receiver<T> res = null;
-			Task<T> task = new Task<T> ((_unused) => res.Cleanup ());
-			res = new WeirdReceiver<T> (port, task);
+			res = new WeirdReceiver<T> (port);
 			return res;
 		}
 
@@ -58,7 +59,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			Receiver<T> res = null;
 			Task<T> task = new Task<T> (handler);
-			res = new WeirdReceiver<T> (port, null, task);
+			res = new Receiver<T> (port, null, task);
 			return res;
 		}
 
@@ -66,7 +67,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			Receiver<T> res = null;
 			Task<T> task = new Task<T> (handler);
-			res = new WeirdReceiver<T> (port, predicate, task);
+			res = new Receiver<T> (port, predicate, task);
 			return res;
 		}
 	}

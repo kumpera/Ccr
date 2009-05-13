@@ -541,6 +541,27 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
+		class MyReceiver : Receiver<int> {
+			Port<int> port;
+			public MyReceiver (Port<int> p) : base (p, null, null) { this.port = p; }
+
+			public override IEnumerator<ITask> Execute ()
+			{
+				Console.WriteLine ("execute handler {0} arbiter {1} ll {2}", ArbiterCleanupHandler, Arbiter, LinkedIterator);
+				Console.WriteLine (new StackTrace ());
+				//((IPortReceive)port).RegisterReceiver (this);
+				return null;
+			}
+
+			public bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+			{
+				Console.WriteLine ("eval handler {0} arbiter {1} ll {2}", ArbiterCleanupHandler, Arbiter, LinkedIterator);
+				Console.WriteLine (new StackTrace ());
+				deferredTask = null;
+				return false;
+			}
+		}
+
 		Port<int> iterPort;
 		AutoResetEvent iterEvent;
 		int iterRes;
@@ -549,7 +570,9 @@ namespace Microsoft.Ccr.Core {
 		{
 			for (int i = 0; i < 5; ++i) {
 				yield return iterPort.Receive ();
-				iterRes += iterPort;
+				int val = iterPort;
+				//Console.WriteLine ("---{0}---", val);
+				iterRes += val;
 			}
 			iterEvent.Set ();
 		}

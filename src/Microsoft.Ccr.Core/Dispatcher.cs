@@ -46,7 +46,8 @@ namespace Microsoft.Ccr.Core
 				if (iterator.MoveNext ()) {
 					ITask task = iterator.Current;
 					task.LinkedIterator = this;
-					queue.Enqueue (task);
+					task.TaskQueue = queue;
+					task.Execute ();
 				}
 			} catch (Exception ex) {
 				this.iterator.Dispose ();
@@ -59,14 +60,11 @@ namespace Microsoft.Ccr.Core
 		internal void Step (ITask task, DispatcherQueue queue)
 		{
 			try {
-				IEnumerator<ITask> nested = task.Execute ();
-				if (nested != null)
-					Console.WriteLine ("OMG, what now?");
-
 				if (iterator.MoveNext ()) {
 					task = iterator.Current;
 					task.LinkedIterator = this;
-					queue.Enqueue (task);
+					task.TaskQueue = queue;
+					task.Execute ();
 				}
 			}  catch (Exception ex) {
 				this.iterator.Dispose ();
@@ -93,19 +91,20 @@ namespace Microsoft.Ccr.Core
 			thread.Start ();
 		}
 
+		[MonoTODO ("support nested iterators")]
 		void RunTask (ITask task)
 		{
-			object obj = task.LinkedIterator;
-			if (obj != null) {
-				IteratorData id = (IteratorData)obj;
-				id.Step (task, mediator.queue);
-			} else {
-				var iter = task.Execute ();
-				if (iter != null) {
-					IteratorData id = new IteratorData (iter);
-					id.Begin (mediator.queue);
-				}
+			var obj = task.LinkedIterator;
+			var iter = task.Execute ();
+			if (obj != null && iter != null)
+				Console.WriteLine ("FIX ME PLEASE as I have a nested iterator");
+
+			if (iter != null) {
+				IteratorData id = new IteratorData (iter);
+				id.Begin (mediator.queue);
 			}
+			if (obj != null)
+				((IteratorData)obj).Step (task, mediator.queue);
 		}
 
 		void Run ()
