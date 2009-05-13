@@ -55,6 +55,17 @@ namespace Microsoft.Ccr.Core {
 		{
 			return new Receiver<T> (persist, port, predicate, new Task<T> (handler));
 		}
+
+		public static Receiver<T> ReceiveFromPortSet<T> (bool persist, IPortSet portSet, Handler<T> handler)
+		{
+			return new Receiver<T> (persist, (IPortReceive)portSet [typeof (T)], null, new Task<T> (handler));
+		}
+
+		public static Receiver<T> ReceiveFromPortSet<T> (bool persist, IPortSet portSet, Handler<T> handler, Predicate<T> predicate)
+		{
+			return new Receiver<T> (persist, (IPortReceive)portSet [typeof (T)], predicate, new Task<T> (handler));
+		}
+
 	}
 
 }

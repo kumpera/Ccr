@@ -116,5 +116,34 @@ namespace Microsoft.Ccr.Core {
 			task.Execute ();
 			Assert.AreEqual (1, cnt, "#1");
 		}
+
+		[Test]
+		public void ReceiveFromPortSet ()
+		{
+			var ps = new PortSet (typeof (int), typeof(string));
+			var dq = new SerialDispatchQueue ();
+			int cnt = 1;
+			var task = Arbiter.ReceiveFromPortSet (true, ps, (int a)=> { cnt += a; });
+			task.TaskQueue = dq;
+			task.Execute ();
+			Assert.AreEqual (1, ((IPortReceive)ps [typeof (int)]).GetReceivers().Length, "#1");
+
+			ps [typeof (int)].PostUnknownType (10);
+			Assert.AreEqual (11, cnt, "#2");
+		}
+
+		[Test]
+		public void ReceiveFromPortSetUnderSharedMode ()
+		{
+
+			var ps = new PortSet (typeof (int), typeof(string));
+			var dq = new SerialDispatchQueue ();
+			ps.Mode = PortSetMode.SharedPort;
+
+			try {
+				Arbiter.ReceiveFromPortSet (true, ps, (int a)=> { });
+				Assert.Fail ("#1");
+			} catch (InvalidOperationException) {}
+		}
 	}
 }
