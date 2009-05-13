@@ -46,7 +46,7 @@ namespace Microsoft.Ccr.Core {
 			return new Task (handler);
 		}
 		
-		public static ITask FromHandler (IteratorHandler handler)
+		public static ITask FromIteratorHandler (IteratorHandler handler)
 		{
 			return new IterativeTask (handler);
 		}
