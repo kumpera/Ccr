@@ -28,6 +28,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
 		src/Microsoft.Ccr.Core/PortSet.generated.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
+		src/Microsoft.Ccr.Core/ReceiverGroups.cs \
 		src/Microsoft.Ccr.Core/Shutdown.cs \
 		src/Microsoft.Ccr.Core/SuccessResult.cs \
 		src/Microsoft.Ccr.Core/SuccessFailurePort.cs \
