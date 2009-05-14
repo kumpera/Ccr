@@ -53,6 +53,7 @@ namespace Microsoft.Ccr.Core {
 	{
 		ITask userTask;
 		IPortReceive[] ports;
+		Receiver[] receivers;
 		int remaining;
 
 		public MultipleItemReceiver (ITask userTask, params IPortReceive[] ports)
@@ -70,9 +71,21 @@ namespace Microsoft.Ccr.Core {
 			return true;
 		}
 
+		public override void Cleanup ()
+		{
+			for (int i = 0; i < ports.Length; ++i)
+				ports [i].UnregisterReceiver (receivers [i]);
+			Cleanup (userTask);
+		}
+
 		public override void Cleanup (ITask taskToCleanup)
 		{
-			throw new NotImplementedException ();
+			for (int i = 0; i < ports.Length; ++i) {
+				IPort port = (IPort)ports [i];
+				var obj = userTask [i];
+				if (obj != null)
+					port.TryPostUnknownType (obj.Item);
+			}
 		}
 
 		public override void Consume (IPortElement item)
@@ -103,9 +116,11 @@ namespace Microsoft.Ccr.Core {
 				if (TaskQueue == null && value != null)
 					TaskQueue = value.TaskQueue;
 				remaining = ports.Length;
+				receivers = new Receiver [ports.Length];
 				for (int i = 0; i < ports.Length; ++i) {
 					Receiver rec = new ReceiverSurrogate (ports [i], this, i);
 					rec.TaskQueue = this.TaskQueue;
+					receivers [i] = rec;
 					ports [i].RegisterReceiver (rec);
 				}
 			}

@@ -185,5 +185,62 @@ namespace Microsoft.Ccr.Core {
 
 			Assert.AreEqual (15, cnt, "#2");
 		}
+
+		[Test]
+		public void PostToPortSetUserTaskItem ()
+		{
+			IPortReceive pa = new Port <int> ();
+			IPortReceive pb = new Port <string> ();
+			ITask task = new Task<int, string> ((i, s) => { });
+			var mr = new MultipleItemReceiver (task, pa, pb);
+			var dq = new SerialDispatchQueue ();
+			mr.TaskQueue = dq;
+
+			mr.Execute ();
+			((Port<int>)pa).Post (10);
+
+			Assert.AreEqual (10, task [0].Item, "#1");
+		}
+
+		[Test]
+		public void CleanupTask ()
+		{
+			IPortReceive pa = new Port <int> ();
+			IPortReceive pb = new Port <string> ();
+			ITask task = new Task<int, string> ((i, s) => { });
+			var mr = new MultipleItemReceiver (task, pa, pb);
+			var dq = new SerialDispatchQueue ();
+			mr.TaskQueue = dq;
+
+			mr.Execute ();
+			((Port<int>)pa).Post (10);
+			Assert.AreEqual (0, pa.ItemCount, "#1");
+			mr.Cleanup (task);
+
+			Assert.AreEqual (1, pa.ItemCount, "#2");
+			Assert.AreEqual (0, pb.ItemCount, "#3");
+		}
+
+		[Test]
+		public void Cleanup ()
+		{
+			IPortReceive pa = new Port <int> ();
+			IPortReceive pb = new Port <string> ();
+			ITask task = new Task<int, string> ((i, s) => { });
+			var mr = new MultipleItemReceiver (task, pa, pb);
+			var dq = new SerialDispatchQueue ();
+			mr.TaskQueue = dq;
+
+			mr.Execute ();
+			Assert.AreEqual (1, pa.GetReceivers ().Length, "#1");
+			Assert.AreEqual (1, pb.GetReceivers ().Length, "#2");
+
+			mr.Cleanup ();
+			Assert.AreEqual (0, pa.GetReceivers ().Length, "#3");
+			Assert.AreEqual (0, pb.GetReceivers ().Length, "#4");
+
+			Assert.AreEqual (0, pa.ItemCount, "#5");
+			Assert.AreEqual (0, pb.ItemCount, "#6");
+		}
 	}
 }
