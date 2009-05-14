@@ -10,6 +10,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTask.cs \
 		src/Microsoft.Ccr.Core.Arbiters/ReceiverTaskState.cs \
 		src/Microsoft.Ccr.Core/Causality.cs \
+		src/Microsoft.Ccr.Core/Choice.cs \
 		src/Microsoft.Ccr.Core/Dispatcher.cs \
 		src/Microsoft.Ccr.Core/DispatcherOptions.cs \
 		src/Microsoft.Ccr.Core/DispatcherQueue.cs \
@@ -41,6 +42,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/MonoTODOAttribute.cs \
 
 TEST_FILES = test/Microsoft.Ccr.Core/ArbiterTest.cs \
+			 test/Microsoft.Ccr.Core/ChoiceTest.cs \
 			 test/Microsoft.Ccr.Core/IterativeTaskTest.cs \
 			 test/Microsoft.Ccr.Core/MiscTest.cs \
 			 test/Microsoft.Ccr.Core/MultipleItemReceiverTest.cs \
