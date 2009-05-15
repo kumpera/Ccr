@@ -27,6 +27,8 @@
 //
 using System;
 using System.Threading;
+using System.Collections.Generic;
+
 using Microsoft.Ccr.Core.Arbiters;
 
 using NUnit.Framework;
@@ -144,6 +146,54 @@ namespace Microsoft.Ccr.Core {
 				Arbiter.ReceiveFromPortSet (true, ps, (int a)=> { });
 				Assert.Fail ("#1");
 			} catch (InvalidOperationException) {}
+		}
+
+		PortSet iterPort;
+		AutoResetEvent iterEvent;
+		int iterRes;
+
+		IEnumerator<ITask> SimpleTaskIterator ()
+		{
+			for (int i = 0; i < 5; ++i) {
+				yield return Arbiter.Choice (iterPort);
+				iterRes += iterPort.Test<int> ();
+			}
+			iterEvent.Set ();
+		}
+
+		public class NakedArbiter : Task, IArbiterTask 
+		{
+			public ITask taskPassed;
+
+			public NakedArbiter () : base (()=>{}) {}
+		
+			public bool Evaluate(ReceiverTask receiver, ref ITask deferredTask) {
+				taskPassed = deferredTask;
+				return false;
+			}
+
+			public ArbiterTaskState ArbiterState { get { return ArbiterTaskState.Created; } }
+	
+			public Handler ArbiterCleanupHandler { get; set; }
+			public Object LinkedIterator { get; set; }
+			public DispatcherQueue TaskQueue { get; set; }
+		}
+
+		[Test]
+		public void PortSetReceiveToBeUsedWithIterators ()
+		{
+			iterPort = new PortSet (typeof (string), typeof (char), typeof (int));
+			iterEvent = new AutoResetEvent (false);
+			iterRes = 0;
+
+			using (Dispatcher d = new Dispatcher ()) {
+				var disp = new DispatcherQueue ("bla", d); 
+				disp.Enqueue (new IterativeTask (this.SimpleTaskIterator));
+				for (int i = 0; i < 5; ++i)
+					iterPort.PostUnknownType ((i + 1) * 10);
+				Assert.IsTrue (iterEvent.WaitOne (2000), "#1");
+				Assert.AreEqual (150, iterRes, "#2");
+			}
 		}
 	}
 }

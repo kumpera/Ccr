@@ -64,6 +64,8 @@ namespace Microsoft.Ccr.Core {
 
 		void Finish (ITask winner)
 		{
+			if (LinkedIterator != null)
+				winner.LinkedIterator = LinkedIterator;
 			TaskQueue.Enqueue (winner);
 			foreach (var rt in branches)
 				rt.Cleanup ();

@@ -30,29 +30,53 @@ using System.Collections.Generic;
 using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
-	class WeirdReceiver<T0> : Receiver<T0>
+	internal  class WeirdReceiver<T0> : Receiver<T0>
 	{
 		internal WeirdReceiver (Port<T0> port): base (port, null, (Task<T0>)null) {}
 
 		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
 		{
-			base.Evaluate (messageNode, ref deferredTask);
 			Task t = new Task (this.Cleanup);
 			t.LinkedIterator = this.LinkedIterator;
 			t.TaskQueue = this.TaskQueue;
 			deferredTask = t;
+			IArbiterTask arbiter = Arbiter;
+			if (arbiter != null)
+				arbiter.Evaluate (this, ref deferredTask);
+
 			return false;
 		}
 	}
 
+	internal class WeirdReceiver : Receiver
+	{
+		internal WeirdReceiver (IPortReceive port): base (port, null) {}
+
+		public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+		{
+			IArbiterTask arbiter = Arbiter;
+			Task t = new Task (this.Cleanup);
+			t.LinkedIterator = this.LinkedIterator;
+			t.TaskQueue = this.TaskQueue;
+			deferredTask = t;
+
+			if (arbiter != null)
+				arbiter.Evaluate (this, ref deferredTask);
+
+			return false;
+		}
+	}
 
 	public static class PortExtensions 
 	{
+		internal static Receiver ReceiveForIterator (this IPortReceive port)
+		{
+			return new WeirdReceiver (port);
+		}				
+
 		public static Receiver Receive<T> (this Port<T> port)
 		{
-			Receiver<T> res = null;
-			res = new WeirdReceiver<T> (port);
-			return res;
+			return new WeirdReceiver (port);
 		}
 
 		public static Receiver Receive<T> (Port<T> port, Handler<T> handler)

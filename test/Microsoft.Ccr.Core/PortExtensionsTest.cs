@@ -97,5 +97,43 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (1, rec.GetReceivers ().Length, "#5");
 
 		}
+
+		public class NakedArbiter : Task, IArbiterTask 
+		{
+			public ITask taskPassed;
+			public ITask taskToReturn;
+
+			public NakedArbiter (ITask taskToReturn) : base (()=>{}) { this.taskToReturn = taskToReturn; }
+		
+			public bool Evaluate(ReceiverTask receiver, ref ITask deferredTask) {
+				taskPassed = deferredTask;
+				deferredTask = taskToReturn;
+				return true;
+			}
+
+			public ArbiterTaskState ArbiterState { get { return ArbiterTaskState.Created; } }
+	
+			public Handler ArbiterCleanupHandler { get; set; }
+			public Object LinkedIterator { get; set; }
+			public DispatcherQueue TaskQueue { get; set; }
+		}
+
+
+		[Test]
+		public void ReceiverForIteratorWithArbiter ()
+		{
+			Task<int> task = new Task<int> ((i)=>{});
+			Port<int> port = new Port<int> ();
+			var arbiter = new NakedArbiter (task);
+			arbiter.TaskQueue = new VoidDispatcherQueue ();
+
+			var receiver = port.Receive ();
+			receiver.Arbiter = arbiter;
+
+			ITask res = null;
+			Assert.IsFalse (receiver.Evaluate (new PortElement<int>(10), ref res), "#1");
+			Assert.AreEqual (task, res, "#2");
+			Assert.IsNotNull (arbiter.taskPassed, "#3");
+		}
 	}
 }

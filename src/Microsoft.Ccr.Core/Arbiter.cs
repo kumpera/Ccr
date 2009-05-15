@@ -26,6 +26,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 using System;
+using System.Collections.Generic;
+
+using Microsoft.Ccr.Core.Arbiters;
 
 namespace Microsoft.Ccr.Core {
 
@@ -90,6 +93,28 @@ namespace Microsoft.Ccr.Core {
 		{
 			return new Receiver<T> (persist, (IPortReceive)portSet [typeof (T)], predicate, new IterativeTask<T> (handler));
 		}
-	}
 
+		public static Choice Choice (params ReceiverTask[] receivers)
+		{
+			return new Choice (receivers);
+		}
+
+		public static Choice Choice<T0, T1> (PortSet<T0, T1> resultPort, Handler<T0> handler0, Handler<T1> handler1)
+		{
+			return new Choice (
+				Receive (false, resultPort.P0, handler0),
+				Receive (false, resultPort.P1, handler1));
+		}
+
+		public static Choice Choice (IPortSet portSet)
+		{
+			ICollection<IPort> ports = portSet.Ports;
+			ReceiverTask[] receivers = new ReceiverTask [ports.Count];
+			int idx = 0;
+			foreach (var p in ports)
+				receivers[idx++] = (p as IPortReceive).ReceiveForIterator ();
+
+			return new Choice (receivers);
+		}
+	}
 }
