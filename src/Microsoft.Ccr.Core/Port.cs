@@ -50,9 +50,11 @@ namespace Microsoft.Ccr.Core {
 					return;
 				}
 
-				for (var node = receivers.First; node != null; node = node.Next) {
+				var node = receivers.First;
+				var next = node;
+				for (; node != null; node = next) {
+					next = node.Next;
 					ReceiverTask rt = node.Value;
-
 					ITask task = null;
 					bool res = rt.Evaluate (elem, ref task);
 					if (task != null) {
@@ -60,7 +62,7 @@ namespace Microsoft.Ccr.Core {
 						if (dq != null)
 							dq.Enqueue (task);
 					}
-					if (res && rt.State != ReceiverTaskState.Persistent)
+					if (res && rt.State != ReceiverTaskState.Persistent && node.List != null)
 						receivers.Remove (node);
 					if (res)
 						return;

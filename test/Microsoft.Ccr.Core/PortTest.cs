@@ -902,5 +902,45 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (3, r1.eval, "#3");
 			Assert.AreEqual (3, p.ItemCount, "#4");
 		}
+
+		[Test]
+		public void PostWithOneTimeReceiverDoesNotCleanup ()
+		{
+			var p = new Port<int> ();
+			var recv = Arbiter.Receive (false, p, (i) => {});
+			recv.TaskQueue = new VoidDispatcherQueue ();
+
+			recv.Execute ();
+
+			Assert.AreEqual (ReceiverTaskState.Onetime, recv.State);
+			p.Post (10);
+			Assert.AreEqual (ReceiverTaskState.Onetime, recv.State);
+		}
+
+		class WeirdReceiver : Receiver
+		{
+			IPortReceive port;
+			internal WeirdReceiver(IPortReceive port) : base (port, null)
+			{
+				this.port = port;
+				port.RegisterReceiver (this);
+			}
+
+			public override bool Evaluate (IPortElement messageNode, ref ITask deferredTask)
+			{
+				port.UnregisterReceiver (this);
+				return true;
+			}
+		}
+
+		[Test]
+		public void ReceiverCanUnregisterOnEvaluate ()
+		{
+			IPortReceive p = new Port<int> ();
+			var rec = new WeirdReceiver (p);
+			Assert.AreEqual (1, p.GetReceivers ().Length, "#1");
+			((IPort)p).PostUnknownType (10);
+			Assert.AreEqual (0, p.GetReceivers ().Length, "#2");
+		}
 	}
 }
