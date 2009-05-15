@@ -79,7 +79,7 @@ namespace Microsoft.Ccr.Core {
 			return new WeirdReceiver (port);
 		}
 
-		public static Receiver Receive<T> (Port<T> port, Handler<T> handler)
+		public static Receiver Receive<T> (this Port<T> port, Handler<T> handler)
 		{
 			Receiver<T> res = null;
 			Task<T> task = new Task<T> (handler);
@@ -87,7 +87,7 @@ namespace Microsoft.Ccr.Core {
 			return res;
 		}
 
-		public static Receiver Receive<T> (Port<T> port, Handler<T> handler, Predicate<T> predicate)
+		public static Receiver Receive<T> (this Port<T> port, Handler<T> handler, Predicate<T> predicate)
 		{
 			Receiver<T> res = null;
 			Task<T> task = new Task<T> (handler);

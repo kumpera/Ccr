@@ -33,32 +33,32 @@ namespace Microsoft.Ccr.Core {
 
 	public static class PortSetExtensions 
 	{
-		public static Receiver Receive<T0, T1> (PortSet<T0, T1> portSet, Handler<T0> handler)
+		public static Receiver Receive<T0, T1> (this PortSet<T0, T1> portSet, Handler<T0> handler)
 		{
 			return Arbiter.Receive (false, portSet.P0, handler);
 		}
 
-		public static Receiver Receive<T0, T1> (PortSet<T0, T1> portSet, Handler<T1> handler)
+		public static Receiver Receive<T0, T1> (this PortSet<T0, T1> portSet, Handler<T1> handler)
 		{
 			return Arbiter.Receive (false, portSet.P1, handler);
 		}
 
-		public static Choice Choice<T0, T1> (PortSet<T0, T1> portSet)
+		public static Choice Choice<T0, T1> (this PortSet<T0, T1> portSet)
 		{
 			return Arbiter.Choice (portSet);
 		}
 
-		public static Choice Choice<T0, T1, T2> (PortSet<T0, T1, T2> portSet)
+		public static Choice Choice<T0, T1, T2> (this PortSet<T0, T1, T2> portSet)
 		{
 			return Arbiter.Choice (portSet);
 		}
 
-		public static Choice Choice<T0, T1> (PortSet<T0, T1> portSet, Handler<T0> handler0, Handler<T1> handler1)
+		public static Choice Choice<T0, T1> (this PortSet<T0, T1> portSet, Handler<T0> handler0, Handler<T1> handler1)
 		{
 			return Arbiter.Choice (portSet, handler0, handler1);
 		}
 
-		public static Choice Choice<T0, T1, T2> (PortSet<T0, T1, T2> portSet, Handler<T0> handler0, Handler<T1> handler1, Handler<T2> handler2)
+		public static Choice Choice<T0, T1, T2> (this PortSet<T0, T1, T2> portSet, Handler<T0> handler0, Handler<T1> handler1, Handler<T2> handler2)
 		{
 			return new Choice (
 				Arbiter.Receive (false, portSet.P0, handler0),
