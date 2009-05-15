@@ -29,6 +29,7 @@ FILES = src/Assembly/AssemblyInfo.cs \
 		src/Microsoft.Ccr.Core/PortNotFoundException.cs \
 		src/Microsoft.Ccr.Core/PortSet.cs \
 		src/Microsoft.Ccr.Core/PortSet.generated.cs \
+		src/Microsoft.Ccr.Core/PortSetExtensions.cs \
 		src/Microsoft.Ccr.Core/Receiver.cs \
 		src/Microsoft.Ccr.Core/ReceiverGroups.cs \
 		src/Microsoft.Ccr.Core/Shutdown.cs \
