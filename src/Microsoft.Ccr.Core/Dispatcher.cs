@@ -167,9 +167,9 @@ namespace Microsoft.Ccr.Core
 			lock (_lock) {
 				if (worker.Count == 0)
 					SpawnWorker ();
+				++pendingTasks;
 				if (pendingTasks > 0 && worker.Count < MAX_WORKERS)
 					SpawnWorker ();
-				++pendingTasks;
 				Monitor.Pulse (_lock);
 			}
 		}

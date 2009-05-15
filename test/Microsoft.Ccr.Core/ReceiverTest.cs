@@ -640,10 +640,10 @@ namespace Microsoft.Ccr.Core {
 			receiver.Arbiter = arbiter;
 
 			ITask tk = null;
-			receiver.Evaluate (new PortElement<int> (22), ref tk);
+			Assert.IsFalse (receiver.Evaluate (new PortElement<int> (22), ref tk), "#1");
 
-			Assert.AreEqual (task, arbiter.taskPassed, "#1");		
-			Assert.AreEqual (22, task [0].Item, "#2");		
+			Assert.AreEqual (task, arbiter.taskPassed, "#2");
+			Assert.AreEqual (22, task [0].Item, "#3");
 		}
 
 		[Test]

@@ -190,6 +190,7 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (0, rb.execute, "#11");
 			Assert.AreEqual (1, rb.set_arbiter, "#12");
 		}
+
 		[Test]
 		public void ExecutePart2 ()
 		{
@@ -230,5 +231,30 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (13, count, "#17");
 		}
 
+		[Test]
+		public void EvalateOnLooserReturnsNullTask ()
+		{
+			int winner = 0;
+			var pa = new Port<int> ();
+			var pb = new Port<string> ();
+
+			var ra = Arbiter.Receive (false, pa, (i) => { winner = 1; });
+			var rb = Arbiter.Receive (false, pb, (s) => { winner = 2; });
+			var dq = new SerialDispatchQueue ();
+
+			var c = new Choice (ra, rb);
+			c.TaskQueue = dq;
+
+			IPortReceive pra = pa;
+			IPortReceive prb = pb;
+
+			c.Execute ();
+
+			pa.Post (10);
+
+			ITask tk = null;
+			Assert.IsFalse (rb.Evaluate (new PortElement<string> (""), ref tk), "#1");
+			Assert.IsNull (tk, "#2");
+		}
 	}
 }

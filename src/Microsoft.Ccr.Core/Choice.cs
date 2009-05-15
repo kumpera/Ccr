@@ -75,6 +75,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			lock (_lock) {
 				if (done) {
+					deferredTask = null;
 					return false;
 				} else {
 					state = ArbiterTaskState.Done;
