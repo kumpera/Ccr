@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Diagnostics;
 using Microsoft.Ccr.Core.Arbiters;
 
 using NUnit.Framework;
@@ -121,7 +122,7 @@ namespace Microsoft.Ccr.Core {
 			internal int cleanup;
 			internal int cleanup_task;
 			
-			internal NakedReceiver (IPortReceive p) : base (p, null) {}
+			internal NakedReceiver (IPortReceive p, ITask task) : base (p, task) {}
 
 			public override IArbiterTask Arbiter {
 				set {
@@ -149,6 +150,16 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
+		class SerialDispatchQueue : DispatcherQueue
+		{
+			public override bool Enqueue (ITask task)
+			{
+				//Console.WriteLine ("executing {0} from \n{1}", task, new StackTrace ());
+				task.Execute ();
+				return true;
+			}
+		}
+
 		[Test]
 		public void Execute ()
 		{
@@ -156,7 +167,7 @@ namespace Microsoft.Ccr.Core {
 			var pb = new Port<string> ();
 
 			var ra = Arbiter.Receive (false, pa, (i) => {});
-			var rb = new NakedReceiver (pb);
+			var rb = new NakedReceiver (pb, new Task<string>((s) => {}));
 
 			var c = new Choice (ra, rb);
 
@@ -178,6 +189,45 @@ namespace Microsoft.Ccr.Core {
 
 			Assert.AreEqual (0, rb.execute, "#11");
 			Assert.AreEqual (1, rb.set_arbiter, "#12");
+		}
+		[Test]
+		public void ExecutePart2 ()
+		{
+			int count = 3;
+			var pa = new Port<int> ();
+			var pb = new Port<string> ();
+
+			var ra = Arbiter.Receive (false, pa, (i) => count += i);
+			var rb = new NakedReceiver (pb, new Task<string>((s) => count += s.Length));
+			var dq = new SerialDispatchQueue ();
+
+			var c = new Choice (ra, rb);
+			c.TaskQueue = dq;
+
+			IPortReceive pra = pa;
+			IPortReceive prb = pb;
+
+			c.Execute ();
+			pa.Post (10);
+
+			Assert.AreEqual (ArbiterTaskState.Done, c.ArbiterState, "#1");
+			Assert.AreEqual (0, c.PortElementCount, "#2");
+			Assert.AreEqual (0, pra.GetReceivers ().Length, "#3");
+			Assert.AreEqual (0, prb.GetReceivers ().Length, "#4");
+			Assert.AreEqual (c, ra.Arbiter, "#5");
+			Assert.AreEqual (c, rb.Arbiter, "#6");
+			Assert.IsNull (ra.ArbiterContext, "#7");
+			Assert.IsNull (rb.ArbiterContext, "#8");
+			Assert.IsNull (ra.ArbiterCleanupHandler, "#9");
+			Assert.IsNull (rb.ArbiterCleanupHandler, "#10");
+			Assert.AreEqual (0, rb.execute, "#11");
+			Assert.AreEqual (1, rb.set_arbiter, "#12");
+			Assert.AreEqual (1, rb.cleanup, "#13");
+			Assert.AreEqual (0, rb.cleanup_task, "#14");
+			Assert.AreEqual (ReceiverTaskState.CleanedUp, ra.State, "#15");
+			Assert.AreEqual (ReceiverTaskState.CleanedUp, rb.State, "#16");
+
+			Assert.AreEqual (13, count, "#17");
 		}
 
 	}

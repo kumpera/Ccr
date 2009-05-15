@@ -36,6 +36,7 @@ namespace Microsoft.Ccr.Core {
 		ReceiverTask[] branches;
 		object _lock = new object ();
 		ArbiterTaskState state;
+		bool done = false;
 
 		public Choice (params ReceiverTask[] branches)
 		{
@@ -61,9 +62,25 @@ namespace Microsoft.Ccr.Core {
 			return new Choice (branches);
 		}
 
+		void Finish (ITask winner)
+		{
+			TaskQueue.Enqueue (winner);
+			foreach (var rt in branches)
+				rt.Cleanup ();
+		}
+
 		public bool Evaluate (ReceiverTask receiver, ref ITask deferredTask)
 		{
-			throw new NotImplementedException ();
+			lock (_lock) {
+				if (done) {
+					return false;
+				} else {
+					state = ArbiterTaskState.Done;
+					deferredTask = new Task<ITask> (deferredTask, this.Finish);
+					done = true;
+					return true;
+				}
+			}
 		}
 
 		public ArbiterTaskState ArbiterState
