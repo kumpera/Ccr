@@ -229,6 +229,18 @@ namespace Microsoft.Ccr.Core {
 		{
 			get { return SharedPortInternal; }
 		}
+
+
+		public static implicit operator Choice (PortSet portSet)
+		{
+			return Arbiter.Choice (portSet);
+		}
+		
+		public static Choice ImplicitChoiceOperator (IPortSet portSet)
+		{
+			return Arbiter.Choice (portSet);
+		}
+		
 	}
 
 	public class PortSet<T0, T1> : IPortSet, IPort
@@ -333,5 +345,11 @@ namespace Microsoft.Ccr.Core {
 		
 		public static implicit operator Port<T0> (PortSet<T0, T1> port) { return port.P0; }
 		public static implicit operator Port<T1> (PortSet<T0, T1> port) { return port.P1; }
+
+		public static implicit operator Choice (PortSet<T0, T1> portSet)
+		{
+			return Arbiter.Choice (portSet);
+		}
+
 	}
 }
