@@ -76,6 +76,8 @@ namespace Microsoft.Ccr.Core {
 					task = task.PartialClone ();
 				task [0] = messageNode;
 			}
+			if (LinkedIterator != null)
+				task.LinkedIterator = LinkedIterator;
 			deferredTask = task;
 
 			if (arbiter != null && !arbiter.Evaluate (this, ref deferredTask))

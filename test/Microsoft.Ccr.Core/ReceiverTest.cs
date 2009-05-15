@@ -645,5 +645,33 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (task, arbiter.taskPassed, "#1");		
 			Assert.AreEqual (22, task [0].Item, "#2");		
 		}
+
+		[Test]
+		public void ReceiverPassLinkedIteratorAlong ()
+		{
+			Task<int> task = new Task<int>((i) => {});
+			var receiver = new Receiver (new Port<int> (), task);
+			var iter = new object ();
+			receiver.LinkedIterator = iter;
+	
+			ITask res = null;
+			Assert.IsTrue (receiver.Evaluate (new PortElement<int> (10), ref res), "#1");
+			Assert.IsNotNull (res, "#2");
+			Assert.AreEqual (iter, res.LinkedIterator, "#3");
+		}
+
+		[Test]
+		public void GenericReceiverPassLinkedIteratorAlong ()
+		{
+			Task<int> task = new Task<int>((i) => {});
+			var receiver = new Receiver<int> (new Port<int> (), null, task);
+			var iter = new object ();
+			receiver.LinkedIterator = iter;
+	
+			ITask res = null;
+			Assert.IsTrue (receiver.Evaluate (new PortElement<int> (10), ref res), "#1");
+			Assert.IsNotNull (res, "#2");
+			Assert.AreEqual (iter, res.LinkedIterator, "#3");
+		}
 	}
 }
