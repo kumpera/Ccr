@@ -86,6 +86,11 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
+		public override string ToString ()
+		{
+			return String.Format ("{0} Choice with {1} branches", done ? "Decided" : "Undecided", branches.Length);
+		}
+
 		public ArbiterTaskState ArbiterState
 		{
 			get { return state; }
