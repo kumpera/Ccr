@@ -31,50 +31,6 @@ using System.Threading;
 
 namespace Microsoft.Ccr.Core
 {
-	class IteratorData
-	{
-		IEnumerator<ITask> iterator;
-
-		internal IteratorData (IEnumerator<ITask> iterator)
-		{
-			this.iterator = iterator;
-		}
-
-		internal void Begin (DispatcherQueue queue)
-		{
-			try {
-				if (iterator.MoveNext ()) {
-					ITask task = iterator.Current;
-					task.LinkedIterator = this;
-					task.TaskQueue = queue;
-					task.Execute ();
-				}
-			} catch (Exception ex) {
-				this.iterator.Dispose ();
-				this.iterator = null;
-				Console.WriteLine (ex);
-				//TODO post it somewhere
-			}
-		}
-
-		internal void Step (ITask task, DispatcherQueue queue)
-		{
-			try {
-				if (iterator.MoveNext ()) {
-					task = iterator.Current;
-					task.LinkedIterator = this;
-					task.TaskQueue = queue;
-					task.Execute ();
-				}
-			}  catch (Exception ex) {
-				this.iterator.Dispose ();
-				this.iterator = null;
-				Console.WriteLine (ex);
-				//TODO post it somewhere
-			}
-		}
-	}
-
 	class CcrWorker
 	{
 		Thread thread;
@@ -90,24 +46,10 @@ namespace Microsoft.Ccr.Core
 		internal void Start ()
 		{
 			thread = new Thread (this.Run);
+			thread.Name = String.Format ("{0} ThreadPoolThread ID: {1}", dispatcher.Name, this.currentQueue);
 			thread.Start ();
 		}
 
-		[MonoTODO ("support nested iterators")]
-		void RunTask (ITask task, DispatcherQueue queue)
-		{
-			var obj = task.LinkedIterator;
-			var iter = task.Execute ();
-			if (obj != null && iter != null)
-				Console.WriteLine ("FIX ME PLEASE as I have a nested iterator");
-
-			if (iter != null) {
-				IteratorData id = new IteratorData (iter);
-				id.Begin (queue);
-			}
-			if (obj != null)
-				((IteratorData)obj).Step (task, queue);
-		}
 
 		void Run ()
 		{
@@ -117,17 +59,13 @@ namespace Microsoft.Ccr.Core
 				try {
 					task = dispatcher.Dequeue (ref currentQueue, out queue);
 				} catch (Exception e) { //DispatcherQueue is failing, what should we do?
-					//TODO do something with the exception
+					//dispatcher.TaskDone (task, queue, null);
 					Thread.Sleep (500);
 				}
-				try {
-					if (task == null)
-						continue;
-					RunTask (task, queue);
-				} catch (Exception e) {
-					Console.WriteLine ("please fix me {0}", e);
-					//TODO post it somewhere
-				}
+				
+				if (task == null)
+					continue;
+				queue.RunTask (task);
 			}
 		}
 	}
@@ -138,6 +76,7 @@ namespace Microsoft.Ccr.Core
 		DispatcherQueue[] queues = new DispatcherQueue [0];
 		readonly List<CcrWorker> workers = new List<CcrWorker> ();
 
+		long processedTasks;
 		volatile int pendingTasks;
 		volatile int pendingWorkers;
 		internal bool active = true;
@@ -146,6 +85,20 @@ namespace Microsoft.Ccr.Core
 
 		public Dispatcher ()
 		{
+			Name = "unnamed";
+		}
+
+		public Dispatcher (int threadCount, string threadPoolName)
+		{
+			maxThreads = threadCount;
+			Name = threadPoolName;
+		}
+
+		internal void TaskDone (ITask task, Exception e)
+		{
+			Interlocked.Increment (ref processedTasks);
+			if (e != null && UnhandledException != null)
+				UnhandledException (this, new UnhandledExceptionEventArgs (e, false));
 		}
 
 		internal void SpawnWorker ()
@@ -153,7 +106,7 @@ namespace Microsoft.Ccr.Core
 			lock (_lock) {
 				if (workers.Count >= maxThreads)
 					return;
-				var w = new CcrWorker (this, queues.Length == 0 ? 0 : workers.Count % queues.Length);
+				var w = new CcrWorker (this, queues.Length);
 				workers.Add (w);
 				w.Start ();
 			}
@@ -245,5 +198,37 @@ namespace Microsoft.Ccr.Core
 			if (disposing)
 				GC.SuppressFinalize (this);
 		}
+
+		public List<DispatcherQueue> DispatcherQueues
+		{
+			get
+			{
+				DispatcherQueue[] queues = this.queues;
+				return new List<DispatcherQueue> (queues);
+			}
+		}
+
+		public string Name { get; set; }
+
+		public int PendingTaskCount
+		{
+			get { return pendingTasks; }
+			set { } //FIXME what on earth a setter here could do?
+		}
+
+		public long ProcessedTaskCount	
+		{
+			get { return Thread.VolatileRead (ref processedTasks); }
+			set { } //FIXME what on earth a setter here could do?
+		}
+
+		public int WorkerThreadCount
+		{
+			get { return workers.Count; }
+			set { } //FIXME what on earth a setter here could do?
+		}
+
+		public event UnhandledExceptionEventHandler UnhandledException;
+
 	}
 }

@@ -29,7 +29,51 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 
-namespace Microsoft.Ccr.Core {
+namespace Microsoft.Ccr.Core
+{
+	class IteratorData
+	{
+		IEnumerator<ITask> iterator;
+
+		internal IteratorData (IEnumerator<ITask> iterator)
+		{
+			this.iterator = iterator;
+		}
+
+		internal void Begin (DispatcherQueue queue)
+		{
+			try {
+				if (iterator.MoveNext ()) {
+					ITask task = iterator.Current;
+					task.LinkedIterator = this;
+					task.TaskQueue = queue;
+					task.Execute ();
+				}
+			} catch (Exception ex) {
+				this.iterator.Dispose ();
+				this.iterator = null;
+				Console.WriteLine (ex);
+				//TODO post it somewhere
+			}
+		}
+
+		internal void Step (ITask task, DispatcherQueue queue)
+		{
+			try {
+				if (iterator.MoveNext ()) {
+					task = iterator.Current;
+					task.LinkedIterator = this;
+					task.TaskQueue = queue;
+					task.Execute ();
+				}
+			}  catch (Exception ex) {
+				this.iterator.Dispose ();
+				this.iterator = null;
+				Console.WriteLine (ex);
+				//TODO post it somewhere
+			}
+		}
+	}
 
 	public class DispatcherQueue : IDisposable
 	{
@@ -121,14 +165,29 @@ namespace Microsoft.Ccr.Core {
 				GC.SuppressFinalize (this);
 		}
 
-		void DispatchTask (ITask task)
+		[MonoTODO ("support nested iterators")]
+		internal void RunTask (ITask task)
 		{
+			Exception excep = null;
 			try {
-				if (task.Execute () != null)
-					throw new Exception ("Iterative tasks not supported");
+				var obj = task.LinkedIterator;
+				var iter = task.Execute ();
+				if (obj != null && iter != null)
+					Console.WriteLine ("FIX ME PLEASE as I have a nested iterator");
+	
+				if (iter != null) {
+					IteratorData id = new IteratorData (iter);
+					id.Begin (this);
+				}
+				if (obj != null)
+					((IteratorData)obj).Step (task, this);
 			} catch (Exception e) {
 				if (UnhandledException != null)
 					UnhandledException (this, new UnhandledExceptionEventArgs (e, false));
+				else
+					excep = e;				
+			} finally {
+				dispatcher.TaskDone (task, excep);
 			}
 		}
 
@@ -137,7 +196,7 @@ namespace Microsoft.Ccr.Core {
 		{
 			task.TaskQueue = this;
 			if (dispatcher == null) {
-				Handler<ITask> x = DispatchTask;
+				Handler<ITask> x = RunTask;
 				
 				++scheduledItems;
 				return x.BeginInvoke (task, null, null) != null;

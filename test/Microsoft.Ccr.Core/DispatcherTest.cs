@@ -36,12 +36,61 @@ namespace Microsoft.Ccr.Core {
 	[TestFixture]
 	public class DispatcherTest
 	{
+		public class SerialDispatcherQueue : DispatcherQueue
+		{
+			public int queuedTasks;
+			public ITask lastQueuedTask;
+
+			public SerialDispatcherQueue (string str, Dispatcher disp) : base (str, disp) {}
+
+			public override bool Enqueue (ITask task)
+			{
+				++queuedTasks;
+				lastQueuedTask = task;
+				return true;
+			}
+		}
+
 		[Test]
 		public void EmptyCtorSideEffects ()
 		{
 			var disp = new Dispatcher ();
+		}
 
+		[Test]
+		public void UnhandledExceptionPort ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				DispatcherQueue dq = new DispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+				int dispEx = 0;
+				int queueEx = 0;
+				d.UnhandledException += delegate { ++dispEx; };
+				dq.UnhandledException += delegate { ++queueEx; };
 
+				dq.Enqueue (Arbiter.FromHandler (() => { evt.Set (); throw new Exception (); }));
+
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+				Assert.AreEqual (0, dispEx, "#2"); 
+				Assert.AreEqual (1, queueEx, "#3"); 
+
+			}
+		}
+
+		[Test]
+		public void UnhandledExceptionPort2 ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				DispatcherQueue dq = new DispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+				int dispEx = 0;
+				d.UnhandledException += delegate { ++dispEx; };
+
+				dq.Enqueue (Arbiter.FromHandler (() => { evt.Set (); throw new Exception (); }));
+
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+				Assert.AreEqual (1, dispEx, "#2"); 
+			}
 		}
 	}
 }
