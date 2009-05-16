@@ -77,12 +77,14 @@ namespace Microsoft.Ccr.Core
 
 	class CcrWorker
 	{
-		readonly QueueMediator mediator;
 		Thread thread;
+		Dispatcher dispatcher;
+		int currentQueue;
 
-		internal CcrWorker (QueueMediator mediator)
+		internal CcrWorker (Dispatcher dispatcher, int currentQueue)
 		{
-			this.mediator = mediator;
+			this.dispatcher = dispatcher;
+			this.currentQueue = currentQueue;
 		}
 
 		internal void Start ()
@@ -92,7 +94,7 @@ namespace Microsoft.Ccr.Core
 		}
 
 		[MonoTODO ("support nested iterators")]
-		void RunTask (ITask task)
+		void RunTask (ITask task, DispatcherQueue queue)
 		{
 			var obj = task.LinkedIterator;
 			var iter = task.Execute ();
@@ -101,27 +103,27 @@ namespace Microsoft.Ccr.Core
 
 			if (iter != null) {
 				IteratorData id = new IteratorData (iter);
-				id.Begin (mediator.queue);
+				id.Begin (queue);
 			}
 			if (obj != null)
-				((IteratorData)obj).Step (task, mediator.queue);
+				((IteratorData)obj).Step (task, queue);
 		}
 
 		void Run ()
 		{
-			Dispatcher disp = mediator.dispatcher;
-			while (disp.IsAlive) {
+			while (dispatcher.active) {
 				ITask task = null;
+				DispatcherQueue queue = null;
 				try {
-					task = mediator.Dequeue ();
-				} catch (Exception e) { //DispatcherQueue is failing, let's with
+					task = dispatcher.Dequeue (ref currentQueue, out queue);
+				} catch (Exception e) { //DispatcherQueue is failing, what should we do?
 					//TODO do something with the exception
 					Thread.Sleep (500);
 				}
 				try {
 					if (task == null)
 						continue;
-					RunTask (task);
+					RunTask (task, queue);
 				} catch (Exception e) {
 					Console.WriteLine ("please fix me {0}", e);
 					//TODO post it somewhere
@@ -130,94 +132,91 @@ namespace Microsoft.Ccr.Core
 		}
 	}
 
-	class QueueMediator
-	{
-		readonly object _lock = new object ();
-		internal readonly DispatcherQueue queue;
-		readonly List<CcrWorker> worker = new List<CcrWorker> ();
-		volatile bool active = true;
-		readonly internal Dispatcher dispatcher;
-		int pendingTasks;
-
-		const int MAX_WORKERS = 4;
-
-		internal QueueMediator (Dispatcher dispatcher, DispatcherQueue queue)
-		{
-			this.queue = queue;
-			this.dispatcher = dispatcher;
-		}
-
-		internal ITask Test ()
-		{
-			return null;
-		}
-		
-		internal void SpawnWorker ()
-		{
-			lock (_lock) {
-				var w = new CcrWorker (this);
-				worker.Add (w);
-				w.Start ();
-			}
-		}
-
-
-		internal void Notify ()
-		{
-			lock (_lock) {
-				if (worker.Count == 0)
-					SpawnWorker ();
-				++pendingTasks;
-				if (pendingTasks > 0 && worker.Count < MAX_WORKERS)
-					SpawnWorker ();
-				Monitor.Pulse (_lock);
-			}
-		}
-
-		internal ITask Dequeue ()
-		{
-			lock (_lock) {
-				ITask task = null;
-				while (active && !queue.TryDequeue (out task))
-					Monitor.Wait (_lock);
-				--pendingTasks;
-				return task;
-			}
-		}
-
-		internal void Shutdown ()
-		{
-			active = false;	
-			lock (_lock) {
-				Monitor.PulseAll (_lock);
-			}	
-		}
-		
-	}
-
 	public sealed class Dispatcher : IDisposable
 	{
 		object _lock = new object ();
-		List <QueueMediator> queues = new List <QueueMediator> ();
+		DispatcherQueue[] queues = new DispatcherQueue [0];
+		readonly List<CcrWorker> workers = new List<CcrWorker> ();
+
+		volatile int pendingTasks;
+		volatile int pendingWorkers;
+		internal bool active = true;
 		bool isDisposed;
+		int maxThreads = 10;
 
 		public Dispatcher ()
 		{
 		}
 
-		internal bool IsAlive { get { return !isDisposed; } }
+		internal void SpawnWorker ()
+		{
+			lock (_lock) {
+				if (workers.Count >= maxThreads)
+					return;
+				var w = new CcrWorker (this, queues.Length == 0 ? 0 : workers.Count % queues.Length);
+				workers.Add (w);
+				w.Start ();
+			}
+		}
+
+		internal ITask Dequeue (ref int start, out DispatcherQueue queue)
+		{
+			DispatcherQueue[] queues = this.queues;
+			ITask task  = null;
+			int qlen = queues.Length;
+
+			while (active) {
+				for (int i = 0; i < qlen; ++i) {
+					int idx = (i + start) % qlen;
+					if (queues [idx].TryDequeue (out task)) {
+						queue = queues [idx];
+						start = (idx + 1) % qlen;
+						Interlocked.Decrement (ref pendingTasks);
+						return task;
+					}
+				}
+	
+				lock (_lock) {
+					for (int i = 0; i < qlen; ++i) {
+						int idx = (i + start) % qlen;
+						if (queues [idx].TryDequeue (out task)) {
+							queue = queues [idx];
+							start = (idx + 1) % qlen;
+							Interlocked.Decrement (ref pendingTasks);
+							return task;
+						}
+					}
+					Interlocked.Increment (ref pendingWorkers);
+					Monitor.Wait (_lock);
+					Interlocked.Decrement (ref pendingWorkers);
+				}
+			}
+			queue = null;
+			return null;
+		}
 
 		internal void Notify (DispatcherQueue queue)
 		{
-			((QueueMediator)queue.DispatcherObject).Notify ();
+			int curPending = Interlocked.Increment (ref pendingTasks);
+
+			if (workers.Count == 0 || (curPending > 0 && workers.Count < maxThreads)) {
+				SpawnWorker ();
+				return;
+			}
+
+			lock (_lock) {
+				if (pendingWorkers != 0)
+					Monitor.Pulse (_lock);
+			}
 		}
 
 		internal void Register (DispatcherQueue queue)
 		{
 			lock (_lock) {
-				QueueMediator qm = new QueueMediator (this, queue);
-				queue.DispatcherObject = qm;
-				queues.Add (qm);
+				DispatcherQueue[] res = new DispatcherQueue [queues.Length + 1];
+				queues.CopyTo (res, 0);
+				res [queues.Length] = queue;
+				queues = res;
 			}
 		}
 
@@ -237,8 +236,10 @@ namespace Microsoft.Ccr.Core
 			if (isDisposed)
 				return;
 			lock (_lock) {
+				active = false;
+				Monitor.PulseAll (_lock);
 				foreach (var qm in queues)
-					qm.Shutdown ();
+					qm.Dispose ();
 			}
 			isDisposed = true;
 			if (disposing)
