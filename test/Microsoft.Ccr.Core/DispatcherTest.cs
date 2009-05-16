@@ -85,7 +85,6 @@ namespace Microsoft.Ccr.Core {
 				Assert.IsTrue (evt.WaitOne (2000), "#1");
 				Assert.AreEqual (0, dispEx, "#2"); 
 				Assert.AreEqual (1, queueEx, "#3"); 
-
 			}
 		}
 
@@ -142,6 +141,35 @@ namespace Microsoft.Ccr.Core {
 				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
 				Assert.IsTrue (evt.WaitOne (2000), "#3");
 				Assert.AreEqual (2, portPost, "#4");
+			}
+		}
+
+		[Test]
+		public void DispatchEventWithDispatcherQueueExceptionPort ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				var dq = new DispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+				var port = new Port<Exception> ();
+				dq.UnhandledExceptionPort = port;
+				
+				int portPost = 0;
+				int dispEx = 0;
+				d.UnhandledException += delegate { ++dispEx; };
+
+				var rec = Arbiter.Receive (true, port, (e) => { ++portPost; evt.Set(); });
+				rec.TaskQueue = dq;
+				rec.Execute ();
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+				Assert.AreEqual (1, portPost, "#2");
+				Assert.AreEqual (0, dispEx, "#3");
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#4");
+				Assert.AreEqual (2, portPost, "#5");
+				Assert.AreEqual (0, dispEx, "#6");
 			}
 		}
 

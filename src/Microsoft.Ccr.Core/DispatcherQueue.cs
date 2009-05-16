@@ -182,10 +182,16 @@ namespace Microsoft.Ccr.Core
 				if (obj != null)
 					((IteratorData)obj).Step (task, this);
 			} catch (Exception e) {
-				if (UnhandledException != null)
+					excep = e;
+				if (UnhandledException != null) {
 					UnhandledException (this, new UnhandledExceptionEventArgs (e, false));
-				else
-					excep = e;				
+					excep = null;
+				}
+				var port = UnhandledExceptionPort;
+				if (port != null) {
+					port.Post (e);	
+					excep = null;
+				}
 			} finally {
 				dispatcher.TaskDone (task, excep);
 			}
