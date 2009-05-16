@@ -97,8 +97,13 @@ namespace Microsoft.Ccr.Core
 		internal void TaskDone (ITask task, Exception e)
 		{
 			Interlocked.Increment (ref processedTasks);
-			if (e != null && UnhandledException != null)
-				UnhandledException (this, new UnhandledExceptionEventArgs (e, false));
+			if (e != null) {
+				if (UnhandledException != null)
+					UnhandledException (this, new UnhandledExceptionEventArgs (e, false));
+				var port = UnhandledExceptionPort;
+				if (port != null)
+					port.Post (e);
+			}
 		}
 
 		internal void SpawnWorker ()
@@ -227,6 +232,8 @@ namespace Microsoft.Ccr.Core
 			get { return workers.Count; }
 			set { } //FIXME what on earth a setter here could do?
 		}
+
+		public Port<Exception> UnhandledExceptionPort { get; set; }
 
 		public event UnhandledExceptionEventHandler UnhandledException;
 

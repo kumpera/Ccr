@@ -36,6 +36,18 @@ namespace Microsoft.Ccr.Core {
 	[TestFixture]
 	public class DispatcherTest
 	{
+		public class FaultyDispatcherQueue : DispatcherQueue
+		{
+			public FaultyDispatcherQueue (string str, Dispatcher disp) : base (str, disp) {}
+
+			public override bool TryDequeue (out ITask task)
+			{
+				task = null;
+				throw new Exception ();
+				return false;
+			}
+		}
+
 		public class SerialDispatcherQueue : DispatcherQueue
 		{
 			public int queuedTasks;
@@ -66,9 +78,9 @@ namespace Microsoft.Ccr.Core {
 				int dispEx = 0;
 				int queueEx = 0;
 				d.UnhandledException += delegate { ++dispEx; };
-				dq.UnhandledException += delegate { ++queueEx; };
+				dq.UnhandledException += delegate { ++queueEx; evt.Set (); };
 
-				dq.Enqueue (Arbiter.FromHandler (() => { evt.Set (); throw new Exception (); }));
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
 
 				Assert.IsTrue (evt.WaitOne (2000), "#1");
 				Assert.AreEqual (0, dispEx, "#2"); 
@@ -84,12 +96,118 @@ namespace Microsoft.Ccr.Core {
 				DispatcherQueue dq = new DispatcherQueue ("foo", d);
 				var evt = new AutoResetEvent (false);
 				int dispEx = 0;
-				d.UnhandledException += delegate { ++dispEx; };
+				d.UnhandledException += delegate { ++dispEx; evt.Set (); };
 
-				dq.Enqueue (Arbiter.FromHandler (() => { evt.Set (); throw new Exception (); }));
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
 
 				Assert.IsTrue (evt.WaitOne (2000), "#1");
 				Assert.AreEqual (1, dispEx, "#2"); 
+			}
+		}
+
+		[Test]
+		public void UnhandledExceptionPort3 ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				var dq = new FaultyDispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+
+				int dispEx = 0;
+				d.UnhandledException += delegate { ++dispEx; };
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Thread.Sleep (100);
+				Assert.AreEqual (0, dispEx, "#1"); 
+			}
+		}
+
+		[Test]
+		public void ExceptionPort ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				var dq = new DispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+				var port = new Port<Exception> ();
+				d.UnhandledExceptionPort = port;
+
+				int portPost = 0;
+				var rec = Arbiter.Receive (true, port, (e) => { ++portPost; evt.Set(); });
+				rec.TaskQueue = dq;
+				rec.Execute ();
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+				Assert.AreEqual (1, portPost, "#2");
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#3");
+				Assert.AreEqual (2, portPost, "#4");
+			}
+		}
+
+		[Test]
+		public void ExceptionPortAndEvent ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				var dq = new DispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+				var port = new Port<Exception> ();
+
+				int dispEx = 0;
+				int portPost = 0;
+
+				d.UnhandledExceptionPort = port;
+				d.UnhandledException += delegate { ++dispEx; };
+
+				var rec = Arbiter.Receive (true, port, (e) => { ++portPost; evt.Set(); });
+				rec.TaskQueue = dq;
+				rec.Execute ();
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+				Assert.AreEqual (1, portPost, "#2"); 
+				Assert.AreEqual (1, dispEx, "#3"); 
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#4");
+
+				Assert.AreEqual (2, portPost, "#5"); 
+				Assert.AreEqual (2, dispEx, "#6"); 
+			}
+		}
+
+		[Test]
+		public void ExceptionPortAndEventButWithDQEvent ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				var dq = new DispatcherQueue ("foo", d);
+				var evt = new AutoResetEvent (false);
+				var port = new Port<Exception> ();
+
+				int dispEx = 0;
+				int portPost = 0;
+				int queueEx = 0;
+
+				d.UnhandledExceptionPort = port;
+				d.UnhandledException += delegate { ++dispEx; };
+				dq.UnhandledException += delegate { ++queueEx; evt.Set (); };
+
+				var rec = Arbiter.Receive (true, port, (e) => { ++portPost; });
+				rec.TaskQueue = dq;
+				rec.Execute ();
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#1");
+				Assert.AreEqual (0, portPost, "#2"); 
+				Assert.AreEqual (0, dispEx, "#3"); 
+				Assert.AreEqual (1, queueEx, "#4"); 
+
+				dq.Enqueue (Arbiter.FromHandler (() => { throw new Exception (); }));
+				Assert.IsTrue (evt.WaitOne (2000), "#5");
+
+				Assert.AreEqual (0, portPost, "#6"); 
+				Assert.AreEqual (0, dispEx, "#7"); 
+				Assert.AreEqual (2, queueEx, "#8"); 
 			}
 		}
 	}
