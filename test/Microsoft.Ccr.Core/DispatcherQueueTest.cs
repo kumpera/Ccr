@@ -654,5 +654,27 @@ namespace Microsoft.Ccr.Core {
 				Assert.Fail ("#2");
 			} catch (ObjectDisposedException) {}
 		}
+
+		[Test]
+		public void FixedQueueAndDiscardConstraint ()
+		{
+			var evt = new AutoResetEvent (false);
+			int res = 0;
+			using (Dispatcher d = new Dispatcher ()) {
+				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks, 2);
+				ITask task = null;
+				disp.Suspend ();
+
+				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { ++res; })), "#1");
+				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { ++res; })), "#2");
+				Assert.IsFalse (disp.Enqueue (Arbiter.FromHandler (() => { ++res; })), "#3");
+
+				disp.Resume ();
+				Thread.Sleep (10);
+				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { evt.Set (); })), "#4");
+				Assert.IsTrue (evt.WaitOne (2000), "#5");
+				Assert.AreEqual (2, res, "#6");
+			}
+		}
 	}
 }

@@ -128,7 +128,7 @@ namespace Microsoft.Ccr.Core
 			MaximumSchedulingRate = 1;
 		}
 
-		public DispatcherQueue(string name, Dispatcher dispatcher, TaskExecutionPolicy policy, int maximumQueueDepth) : this (name, dispatcher, policy) 
+		public DispatcherQueue (string name, Dispatcher dispatcher, TaskExecutionPolicy policy, int maximumQueueDepth) : this (name, dispatcher, policy) 
 		{
 			if (policy == TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks || policy == TaskExecutionPolicy.ConstrainSchedulingRateThrottleExecution)
 				throw new ArgumentException ("schedulingRate");
@@ -211,6 +211,11 @@ namespace Microsoft.Ccr.Core
 				return x.BeginInvoke (task, null, null) != null;
 			} else {
 				lock (_lock) {
+					var p = Policy;
+					if (p == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks) {
+						if (queue.Count >= MaximumQueueDepth)
+							return false;
+					} 
 					queue.AddLast (task);
 				}
 				if (!suspended)
