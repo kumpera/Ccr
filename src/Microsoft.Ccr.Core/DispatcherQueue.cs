@@ -201,6 +201,8 @@ namespace Microsoft.Ccr.Core
 		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual bool Enqueue (ITask task)
 		{
+			if (isDisposed)
+				throw new ObjectDisposedException (ToString ());
 			task.TaskQueue = this;
 			if (dispatcher == null) {
 				Handler<ITask> x = RunTask;
@@ -220,6 +222,8 @@ namespace Microsoft.Ccr.Core
 		[MonoTODO ("doesn't work constrained policies")]
 		public virtual bool TryDequeue (out ITask task)
 		{
+			if (isDisposed)
+				throw new ObjectDisposedException (ToString ());
 			if (suspended) {
 				task = null;
 				return false;

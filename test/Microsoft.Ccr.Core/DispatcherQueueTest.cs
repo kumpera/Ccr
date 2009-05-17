@@ -571,7 +571,6 @@ namespace Microsoft.Ccr.Core {
 			for (int i = 0; i < 5; ++i) {
 				yield return iterPort.Receive ();
 				int val = iterPort;
-				//Console.WriteLine ("---{0}---", val);
 				iterRes += val;
 			}
 			iterEvent.Set ();
@@ -613,8 +612,47 @@ namespace Microsoft.Ccr.Core {
 				disp.Resume ();
 				Assert.IsTrue (evt.WaitOne (2000),"#5");
 				Assert.AreEqual (1, res, "#6");
-
 			}
+		}
+
+		[Test]
+		public void EnqueueAfterDispose ()
+		{
+			using (Dispatcher d = new Dispatcher ()) {
+				var disp = new DispatcherQueue ("bla", d);
+				disp.Dispose ();
+
+				try {
+					disp.Enqueue (Arbiter.FromHandler (() => { }));
+					Assert.Fail ("#1");
+				} catch (ObjectDisposedException) {}
+
+				try {
+					ITask task = null;
+					disp.TryDequeue (out task);
+					Assert.Fail ("#2");
+				} catch (ObjectDisposedException) {}
+			}
+		}
+
+
+		[Test]
+		[Category ("NotDotNet")]
+		public void EnqueueAfterDispose2 ()
+		{
+			var disp = new DispatcherQueue ();
+			disp.Dispose ();
+
+			try {
+				disp.Enqueue (Arbiter.FromHandler (() => { }));
+				Assert.Fail ("#1");
+			} catch (ObjectDisposedException) {}
+
+			try {
+				ITask tk = null;
+				disp.TryDequeue (out tk);
+				Assert.Fail ("#2");
+			} catch (ObjectDisposedException) {}
 		}
 	}
 }
