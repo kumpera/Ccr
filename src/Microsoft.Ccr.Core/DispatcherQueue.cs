@@ -82,6 +82,7 @@ namespace Microsoft.Ccr.Core
 		long scheduledItems;
 		LinkedList<ITask> queue = new LinkedList<ITask> ();
 		object _lock = new object ();
+		bool isDisposed;
 
 		internal object DispatcherObject { get; set; }
 
@@ -160,7 +161,7 @@ namespace Microsoft.Ccr.Core
 
 		protected virtual void Dispose (bool disposing)
 		{
-			IsDisposed = true;
+			isDisposed = true;
 			if (disposing)
 				GC.SuppressFinalize (this);
 		}
@@ -210,14 +211,19 @@ namespace Microsoft.Ccr.Core
 				lock (_lock) {
 					queue.AddLast (task);
 				}
-				dispatcher.Notify (this);
-				return true;//?
+				if (!suspended)
+					dispatcher.Notify (this);
+				return true;
 			}
 		}
 
 		[MonoTODO ("doesn't work constrained policies")]
 		public virtual bool TryDequeue (out ITask task)
 		{
+			if (suspended) {
+				task = null;
+				return false;
+			}
 			lock (_lock) {
 				if (queue.Count == 0) {
 					task = null;
@@ -230,27 +236,44 @@ namespace Microsoft.Ccr.Core
 		}
 
 
-		[MonoTODO ("doesn't work with dispatcher or constrained policies")]
+		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual void Suspend ()
 		{
-			suspended = true;
+			lock (_lock) {
+				suspended = true;
+			}
 		}
 
-		[MonoTODO ("doesn't work with dispatcher or constrained policies")]
+		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual void Resume ()
 		{
-			suspended = false;
+			bool orig;
+			lock (_lock) {
+				orig = suspended;
+				suspended = false;
+			}
+			if (orig && dispatcher != null)
+				dispatcher.Notify (this);
 		}
 
-		public int Count { get; set; }
+		public int Count
+		{
+			get { return queue.Count; }
+			set {}
+		}
+
 		public double CurrentSchedulingRate { get; set; }
+
 		public string Name { get; set; }
 
 		[XmlIgnoreAttribute]
 		public Port<ITask> ExecutionPolicyNotificationPort { get; set; }
 		
-		[MonoTODO ("having a setter is VERY weird, must test behavior")]
-		public bool IsDisposed { get; set; }
+		public bool IsDisposed
+		{
+			get { return isDisposed; }
+		 	set { }
+		}
 
 		public bool IsSuspended
 		{
@@ -270,6 +293,7 @@ namespace Microsoft.Ccr.Core
 		public int MaximumQueueDepth { get; set; }
 		public double MaximumSchedulingRate { get; set; }
 		public TaskExecutionPolicy Policy { get; set; }
+
 		public long ScheduledTaskCount {
 			get { return scheduledItems; }
 			set { scheduledItems = value; }

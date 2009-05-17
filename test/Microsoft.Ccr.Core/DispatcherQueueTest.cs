@@ -593,5 +593,28 @@ namespace Microsoft.Ccr.Core {
 				Assert.AreEqual (100, iterRes, "#2");
 			}
 		}
+
+		[Test]
+		public void SuspendWithDispatcher ()
+		{
+			var evt = new AutoResetEvent (false);
+			int res = 0;
+
+			using (Dispatcher d = new Dispatcher ()) {
+				var disp = new DispatcherQueue ("bla", d);
+				ITask task = null;
+				disp.Suspend ();
+
+				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { ++res; evt.Set(); })), "#1");
+				Assert.IsFalse (disp.TryDequeue (out task), "#2");
+				Assert.IsNull (task, "#3");
+				Assert.AreEqual (0, res, "#4");
+
+				disp.Resume ();
+				Assert.IsTrue (evt.WaitOne (2000),"#5");
+				Assert.AreEqual (1, res, "#6");
+
+			}
+		}
 	}
 }
