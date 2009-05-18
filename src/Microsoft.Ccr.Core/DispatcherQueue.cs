@@ -28,6 +28,7 @@
 using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
+using System.Threading;
 
 namespace Microsoft.Ccr.Core
 {
@@ -82,7 +83,7 @@ namespace Microsoft.Ccr.Core
 		long scheduledItems;
 		LinkedList<ITask> queue = new LinkedList<ITask> ();
 		object _lock = new object ();
-		bool isDisposed;
+		volatile bool isDisposed;
 
 		internal object DispatcherObject { get; set; }
 
@@ -161,7 +162,11 @@ namespace Microsoft.Ccr.Core
 
 		protected virtual void Dispose (bool disposing)
 		{
-			isDisposed = true;
+			lock (_lock) {
+				isDisposed = true;
+				Monitor.PulseAll (_lock);
+			}	
+		
 			if (disposing)
 				GC.SuppressFinalize (this);
 		}
@@ -212,10 +217,17 @@ namespace Microsoft.Ccr.Core
 			} else {
 				lock (_lock) {
 					var p = Policy;
+					
 					if (p == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks) {
 						if (queue.Count >= MaximumQueueDepth)
 							return false;
-					} 
+					} else if (p == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution) {
+						while (!isDisposed && queue.Count >= MaximumQueueDepth)
+							Monitor.Wait (_lock);
+						if (isDisposed)
+							throw new ObjectDisposedException (ToString ());
+					}
+	
 					queue.AddLast (task);
 				}
 				if (!suspended)
@@ -239,6 +251,11 @@ namespace Microsoft.Ccr.Core
 					return false;
 				}
 				task = queue.First.Value;
+				var p = Policy;
+				if (p == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution) {
+					if (queue.Count >= MaximumQueueDepth)
+						Monitor.Pulse (_lock);
+				}
 				queue.RemoveFirst ();
 				return true;
 			}

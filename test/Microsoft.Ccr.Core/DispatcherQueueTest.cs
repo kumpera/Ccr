@@ -676,5 +676,47 @@ namespace Microsoft.Ccr.Core {
 				Assert.AreEqual (2, res, "#6");
 			}
 		}
+
+
+		[Test]
+		public void FixedQueueAndThrottleConstraint ()
+		{
+			var parkPool = new ManualResetEvent (false);
+			var queuedEverything = new AutoResetEvent (false);
+			var allTasksDone = new AutoResetEvent (false);
+			var helperDone = new AutoResetEvent (false);
+			int res = 0;
+			Thread otherThread = null;
+			bool all_sched_ok = true;
+			Stopwatch watch = null;
+
+			using (Dispatcher d = new Dispatcher (1, "foo")) {
+				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution, 2);
+
+				Action external = () => {
+					Thread.Sleep (10);
+					disp.Enqueue (Arbiter.FromHandler (() => { ++res; parkPool.WaitOne (); }));
+					disp.Enqueue (Arbiter.FromHandler (() => { ++res; parkPool.WaitOne (); }));
+					disp.Enqueue (Arbiter.FromHandler (() => { ++res; parkPool.WaitOne (); }));
+					otherThread = Thread.CurrentThread;
+					queuedEverything.Set ();
+					watch = Stopwatch.StartNew ();
+					disp.Enqueue (Arbiter.FromHandler (() => { ++res; allTasksDone.Set (); }));
+					watch.Stop ();
+					helperDone.Set ();
+				};
+				external.BeginInvoke (null, null);
+				Assert.IsTrue (queuedEverything.WaitOne (2000), "#1");
+				Thread.Sleep (200);
+				var expectedState = System.Threading.ThreadState.WaitSleepJoin | System.Threading.ThreadState.Background; 
+				Assert.AreEqual (expectedState, otherThread.ThreadState, "#2");
+				parkPool.Set ();
+				Assert.IsTrue (allTasksDone.WaitOne (2000), "#3");
+				Assert.IsTrue (helperDone.WaitOne (2000), "#4");
+
+				Assert.AreEqual (4, res, "#5");
+				Assert.IsTrue (watch.ElapsedMilliseconds > 20, "#6 - " + watch.ElapsedMilliseconds);
+			}
+		}
 	}
 }
