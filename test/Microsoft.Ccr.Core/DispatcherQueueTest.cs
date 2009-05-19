@@ -660,20 +660,20 @@ namespace Microsoft.Ccr.Core {
 		{
 			var evt = new AutoResetEvent (false);
 			int res = 0;
-			using (Dispatcher d = new Dispatcher ()) {
+			using (Dispatcher d = new Dispatcher (1, "foo")) {
 				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks, 2);
 				ITask task = null;
 				disp.Suspend ();
 
-				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { ++res; })), "#1");
-				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { ++res; })), "#2");
-				Assert.IsFalse (disp.Enqueue (Arbiter.FromHandler (() => { ++res; })), "#3");
+				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { res += 1; })), "#1");
+				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { res += 2; })), "#2");
+				Assert.IsFalse (disp.Enqueue (Arbiter.FromHandler (() => { res += 4; })), "#3");
 
 				disp.Resume ();
 				Thread.Sleep (10);
 				Assert.IsTrue (disp.Enqueue (Arbiter.FromHandler (() => { evt.Set (); })), "#4");
 				Assert.IsTrue (evt.WaitOne (2000), "#5");
-				Assert.AreEqual (2, res, "#6");
+				Assert.AreEqual (6, res, "#6");
 			}
 		}
 
@@ -718,5 +718,6 @@ namespace Microsoft.Ccr.Core {
 				Assert.IsTrue (watch.ElapsedMilliseconds > 20, "#6 - " + watch.ElapsedMilliseconds);
 			}
 		}
+
 	}
 }

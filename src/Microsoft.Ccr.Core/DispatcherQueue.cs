@@ -208,6 +208,7 @@ namespace Microsoft.Ccr.Core
 		{
 			if (isDisposed)
 				throw new ObjectDisposedException (ToString ());
+			var res = true;;
 			task.TaskQueue = this;
 			if (dispatcher == null) {
 				Handler<ITask> x = RunTask;
@@ -219,20 +220,22 @@ namespace Microsoft.Ccr.Core
 					var p = Policy;
 					
 					if (p == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks) {
-						if (queue.Count >= MaximumQueueDepth)
-							return false;
+						ITask tk = null;
+						if (queue.Count >= MaximumQueueDepth) {
+							queue.RemoveFirst ();
+							res = false;
+						}
 					} else if (p == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution) {
 						while (!isDisposed && queue.Count >= MaximumQueueDepth)
 							Monitor.Wait (_lock);
 						if (isDisposed)
 							throw new ObjectDisposedException (ToString ());
 					}
-	
 					queue.AddLast (task);
 				}
 				if (!suspended)
 					dispatcher.Notify (this);
-				return true;
+				return res;
 			}
 		}
 
