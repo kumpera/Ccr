@@ -29,6 +29,7 @@ using System;
 using System.Collections.Generic;
 using System.Xml.Serialization;
 using System.Threading;
+using Stopwatch=System.Diagnostics.Stopwatch;
 
 namespace Microsoft.Ccr.Core
 {
@@ -84,6 +85,8 @@ namespace Microsoft.Ccr.Core
 		LinkedList<ITask> queue = new LinkedList<ITask> ();
 		object _lock = new object ();
 		volatile bool isDisposed;
+		double currentRate;
+		Stopwatch watch;
 
 		internal object DispatcherObject { get; set; }
 
@@ -147,6 +150,7 @@ namespace Microsoft.Ccr.Core
 				throw new ArgumentException ("schedulingRate");
 
 			MaximumSchedulingRate = schedulingRate;
+			watch = Stopwatch.StartNew ();
 		}
 
 		~DispatcherQueue ()
@@ -154,7 +158,7 @@ namespace Microsoft.Ccr.Core
 			Dispose (false);
 		}
 
-		[MonoTODO ("Implement proper dispose semantics and checks")]
+		[MonoTODO ("Implement ignore on dispose Dispatcher option")]
 		public void Dispose ()
 		{
 			Dispose (true);
@@ -169,6 +173,14 @@ namespace Microsoft.Ccr.Core
 		
 			if (disposing)
 				GC.SuppressFinalize (this);
+		}
+
+		internal void UpdateSchedulingRate ()
+		{
+			//MS's behavior is pretty odd, it seens to calculate the rate over the whole execution time
+			//It should a more stocastic model of storing the last 1,5,15 secs and be done with it.
+			//Otherwise it's method is very fragile against bursts.
+			currentRate = scheduledItems / (double)watch.Elapsed.TotalSeconds;
 		}
 
 		[MonoTODO ("support nested iterators")]
@@ -218,19 +230,30 @@ namespace Microsoft.Ccr.Core
 			} else {
 				lock (_lock) {
 					var p = Policy;
-					
-					if (p == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks) {
+					switch (p) {
+					case TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks:
 						ITask tk = null;
 						if (queue.Count >= MaximumQueueDepth) {
 							queue.RemoveFirst ();
 							res = false;
 						}
-					} else if (p == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution) {
+						break;
+					case TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution:
 						while (!isDisposed && queue.Count >= MaximumQueueDepth)
 							Monitor.Wait (_lock);
 						if (isDisposed)
 							throw new ObjectDisposedException (ToString ());
+						break;
+					case TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks:
+						UpdateSchedulingRate ();
+						if (CurrentSchedulingRate > MaximumSchedulingRate) {
+							queue.RemoveFirst ();
+							res = false;
+						}
+						break;
 					}
+
+					++scheduledItems;
 					queue.AddLast (task);
 				}
 				if (!suspended)
@@ -291,7 +314,11 @@ namespace Microsoft.Ccr.Core
 			set {}
 		}
 
-		public double CurrentSchedulingRate { get; set; }
+		public double CurrentSchedulingRate
+		{
+			get { return currentRate; }
+			set {} //stupid
+		}
 
 		public string Name { get; set; }
 
@@ -325,7 +352,7 @@ namespace Microsoft.Ccr.Core
 
 		public long ScheduledTaskCount {
 			get { return scheduledItems; }
-			set { scheduledItems = value; }
+			set { } //stupid setter
 		}
 
 		[XmlIgnoreAttribute]

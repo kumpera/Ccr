@@ -719,5 +719,72 @@ namespace Microsoft.Ccr.Core {
 			}
 		}
 
+		[Test]
+		public void ConstrainSchedulingRateDiscardTasks ()
+		{
+			var evt = new AutoResetEvent (false);
+			using (Dispatcher d = new Dispatcher (1, "foo")) {
+				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 10.0);
+				int res = 0;
+				int ok = 0;
+				int bad = 0;
+				for (int i = 0; i < 5; ++i) {
+					bool enq = disp.Enqueue (new Task<int>(i, (x) => { Interlocked.Increment (ref res); }));
+					Thread.Sleep (120);
+					if (enq)
+						++ok;
+					else
+						++bad;
+				}
+				Assert.IsTrue (disp.Enqueue (new Task(() => { evt.Set (); })), "#1");
+				Assert.AreEqual (5, ok, "#2");
+				Assert.AreEqual (0, bad, "#3");
+				Assert.IsTrue (evt.WaitOne (2000), "#4");
+				Assert.AreEqual (5, res, "#5");
+			}
+		}
+
+		[Test]
+		public void ConstrainSchedulingRateDiscardTasksFail1 ()
+		{
+			using (Dispatcher d = new Dispatcher (1, "foo")) {
+				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 10.0);
+				Assert.IsTrue (disp.Enqueue (new Task(() => { })),"#1");
+				Assert.IsFalse (disp.Enqueue (new Task(() => { })),"#2");
+				Thread.Sleep (210);
+				Assert.IsTrue (disp.Enqueue (new Task(() => { })),"#3");
+			}
+		}
+
+		[Test]
+		public void ConstrainSchedulingRateDiscardTasksFail2 ()
+		{
+			using (Dispatcher d = new Dispatcher (1, "foo")) {
+				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 10.0);
+				Assert.IsTrue (disp.Enqueue (new Task(() => { })),"#1");
+				Assert.IsFalse (disp.Enqueue (new Task(() => { })),"#2");
+				Assert.IsFalse (disp.Enqueue (new Task(() => { })),"#3");
+				Thread.Sleep (210);
+				Assert.IsFalse (disp.Enqueue (new Task(() => { })),"#4");
+				Assert.AreEqual (4, disp.ScheduledTaskCount);
+			}
+		}
+
+		//[Test]
+		public void SchedulingRateDecay ()
+		{
+			using (Dispatcher d = new Dispatcher (1, "foo")) {
+				Stopwatch watch = Stopwatch.StartNew ();
+				var disp = new DispatcherQueue ("bla", d, TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks, 10.0);
+				for (int i = 0; i < 5; ++i)
+					disp.Enqueue (new Task(() => { }));
+				double guessRate = 5 / (double)watch.Elapsed.TotalSeconds;
+				Console.WriteLine ("sched rate {0} guess {1}", disp.CurrentSchedulingRate, guessRate);
+				Thread.Sleep ((int)(1000 - watch.ElapsedMilliseconds));
+				disp.Enqueue (new Task(() => { }));
+				guessRate = 6 / (double)watch.Elapsed.TotalSeconds;
+				Console.WriteLine ("sched rate {0} guess {1}", disp.CurrentSchedulingRate, guessRate);
+			}
+		}
 	}
 }
