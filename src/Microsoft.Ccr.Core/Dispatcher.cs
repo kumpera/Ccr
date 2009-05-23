@@ -62,7 +62,7 @@ namespace Microsoft.Ccr.Core
 				DispatcherQueue queue = null;
 				try {
 					task = dispatcher.Dequeue (ref currentQueue, out queue);
-				} catch (Exception e) { //DispatcherQueue is failing, what should we do?
+				} catch (Exception) { //DispatcherQueue is failing, what should we do?
 					//dispatcher.TaskDone (task, queue, null);
 					Thread.Sleep (500);
 				}
@@ -81,8 +81,8 @@ namespace Microsoft.Ccr.Core
 		readonly List<CcrWorker> workers = new List<CcrWorker> ();
 
 		long processedTasks;
-		volatile int pendingTasks;
-		volatile int pendingWorkers;
+		int pendingTasks;
+		int pendingWorkers;
 		internal bool active = true;
 		bool isDisposed;
 		int maxThreads = 10;
@@ -196,7 +196,7 @@ namespace Microsoft.Ccr.Core
 			}
 
 			lock (_lock) {
-				if (pendingWorkers != 0)
+				if (Thread.VolatileRead (ref pendingWorkers) != 0)
 					Monitor.Pulse (_lock);
 			}
 		}
@@ -249,7 +249,7 @@ namespace Microsoft.Ccr.Core
 
 		public int PendingTaskCount
 		{
-			get { return pendingTasks; }
+			get { return Thread.VolatileRead (ref pendingTasks); }
 			set { } //FIXME what on earth a setter here could do?
 		}
 

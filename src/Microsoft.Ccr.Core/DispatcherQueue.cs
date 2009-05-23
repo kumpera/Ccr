@@ -91,12 +91,6 @@ namespace Microsoft.Ccr.Core
 
 		internal object DispatcherObject { get; set; }
 
-		void ConfigureDefaults ()
-		{
-			ThrottlingSleepInterval = new TimeSpan (0,0,0,0,10);
-			Timescale = 1;
-		}
-
 		DispatcherQueue (string name, Dispatcher dispatcher, TaskExecutionPolicy policy)
 		{
 			if (name == null)
@@ -241,7 +235,6 @@ namespace Microsoft.Ccr.Core
 					var p = Policy;
 					switch (p) {
 					case TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks:
-						ITask tk = null;
 						if (queue.Count >= MaximumQueueDepth) {
 							queue.RemoveFirst ();
 							res = false;
