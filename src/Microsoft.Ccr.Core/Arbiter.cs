@@ -116,5 +116,10 @@ namespace Microsoft.Ccr.Core {
 
 			return new Choice (receivers);
 		}
+
+		public static MultipleItemReceiver MultipleItemReceive<T> (VariableArgumentHandler<T> handler, params Port<T>[] ports)
+		{
+			return new MultipleItemReceiver (new VariableArgumentTask<T> (ports.Length, handler), ports);
+		}
 	}
 }
