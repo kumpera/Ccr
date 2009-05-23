@@ -47,6 +47,7 @@ namespace Microsoft.Ccr.Core
 		{
 			thread = new Thread (this.Run);
 			thread.Name = String.Format ("{0} ThreadPoolThread ID: {1}", dispatcher.Name, this.currentQueue);
+			thread.Priority = dispatcher.priority;
 			thread.Start ();
 		}
 
@@ -82,18 +83,27 @@ namespace Microsoft.Ccr.Core
 		internal bool active = true;
 		bool isDisposed;
 		int maxThreads = 10;
+		internal readonly ThreadPriority priority;
+		internal readonly DispatcherOptions options;
 
 		public Dispatcher ()
 		{
 			Name = "unnamed";
 		}
 
-		public Dispatcher (int threadCount, string threadPoolName)
+		public Dispatcher (int threadCount, string threadPoolName) : this (threadCount, ThreadPriority.Normal, DispatcherOptions.None, threadPoolName)
 		{
-			maxThreads = threadCount;
-			Name = threadPoolName;
 		}
 
+		public Dispatcher (int threadCount, ThreadPriority priority, DispatcherOptions options, string threadPoolName)
+		{
+			maxThreads = threadCount;
+			this.priority = priority;
+			this.options = options;
+			Name = threadPoolName;
+			
+		}
+		
 		internal void TaskDone (ITask task, Exception e)
 		{
 			Interlocked.Increment (ref processedTasks);
@@ -183,7 +193,6 @@ namespace Microsoft.Ccr.Core
 			Dispose (false);
 		}
 
-		[MonoTODO ("Implement proper dispose semantics and checks")]
 		public void Dispose ()
 		{
 			Dispose (true);
@@ -233,6 +242,11 @@ namespace Microsoft.Ccr.Core
 			set { } //FIXME what on earth a setter here could do?
 		}
 
+		public DispatcherOptions Options
+		{	get { return options; }
+			set { } //FIXME what on earth a setter here could do?
+		}
+		
 		public Port<Exception> UnhandledExceptionPort { get; set; }
 
 		public event UnhandledExceptionEventHandler UnhandledException;

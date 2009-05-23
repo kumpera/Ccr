@@ -238,5 +238,28 @@ namespace Microsoft.Ccr.Core {
 				Assert.AreEqual (2, queueEx, "#8"); 
 			}
 		}
+
+		[Test]
+		public void StuffAfterDipose ()
+		{
+			Dispatcher d = new Dispatcher ();
+			var dq = new DispatcherQueue ("foo", d);
+			d.Dispose ();
+			dq.Dispose ();
+			Assert.IsTrue (dq.IsDisposed, "#1");
+			try {
+				dq.Enqueue (Arbiter.FromHandler( () => { Console.WriteLine ("ff"); }));
+				Assert.Fail ("#2");
+			} catch (ObjectDisposedException) {}
+
+			d = new Dispatcher (1, ThreadPriority.Normal, DispatcherOptions.SuppressDisposeExceptions, "foo");
+			dq = new DispatcherQueue ("foo", d);
+			d.Dispose ();
+			dq.Dispose ();
+			Assert.IsTrue (dq.IsDisposed, "#3");
+			Assert.IsFalse (dq.Enqueue (Arbiter.FromHandler( () => {})), "#4");
+			Assert.AreEqual (0, dq.ScheduledTaskCount, "#5");
+		}
+
 	}
 }

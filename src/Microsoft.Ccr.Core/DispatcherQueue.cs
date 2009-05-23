@@ -143,6 +143,8 @@ namespace Microsoft.Ccr.Core
 			MaximumQueueDepth = maximumQueueDepth;
 		}
 
+		[MonoTODO ("Support UseProcessorAffinity")]
+		[MonoTODO ("Support UseBackgroundThreads")]
 		public DispatcherQueue (string name, Dispatcher dispatcher, TaskExecutionPolicy policy, double schedulingRate) : this (name, dispatcher, policy)
 		{
 			if (policy == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks || policy == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution)
@@ -159,7 +161,6 @@ namespace Microsoft.Ccr.Core
 			Dispose (false);
 		}
 
-		[MonoTODO ("Implement ignore on dispose Dispatcher option")]
 		public void Dispose ()
 		{
 			Dispose (true);
@@ -216,10 +217,20 @@ namespace Microsoft.Ccr.Core
 			}
 		}
 
+		bool CheckDispose ()
+		{
+			if (isDisposed) {
+				if (dispatcher != null && (dispatcher.options & DispatcherOptions.SuppressDisposeExceptions) != 0)
+					return false;
+				throw new ObjectDisposedException (ToString ());
+			}
+			return true;
+		}
+
 		public virtual bool Enqueue (ITask task)
 		{
-			if (isDisposed)
-				throw new ObjectDisposedException (ToString ());
+			if (!CheckDispose ())
+				return false;
 			var res = true;;
 			task.TaskQueue = this;
 			if (dispatcher == null) {
@@ -244,8 +255,8 @@ namespace Microsoft.Ccr.Core
 							Monitor.Wait (_lock);
 							--waitingProducers;
 						}
-						if (isDisposed)
-							throw new ObjectDisposedException (ToString ());
+						if (!CheckDispose ())
+							return false;
 						break;
 					case TaskExecutionPolicy.ConstrainSchedulingRateDiscardTasks:
 						UpdateSchedulingRate ();
@@ -262,8 +273,8 @@ namespace Microsoft.Ccr.Core
 							--waitingProducers;
 							UpdateSchedulingRate ();
 						}
-						if (isDisposed)
-							throw new ObjectDisposedException (ToString ());
+						if (!CheckDispose ())
+							return false;
 						break;
 					}
 
@@ -278,9 +289,7 @@ namespace Microsoft.Ccr.Core
 
 		public virtual bool TryDequeue (out ITask task)
 		{
-			if (isDisposed)
-				throw new ObjectDisposedException (ToString ());
-			if (suspended) {
+			if (!CheckDispose () || suspended) {
 				task = null;
 				return false;
 			}
