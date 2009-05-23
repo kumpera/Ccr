@@ -143,8 +143,6 @@ namespace Microsoft.Ccr.Core
 			MaximumQueueDepth = maximumQueueDepth;
 		}
 
-		[MonoTODO ("Support UseProcessorAffinity")]
-		[MonoTODO ("Support UseBackgroundThreads")]
 		public DispatcherQueue (string name, Dispatcher dispatcher, TaskExecutionPolicy policy, double schedulingRate) : this (name, dispatcher, policy)
 		{
 			if (policy == TaskExecutionPolicy.ConstrainQueueDepthDiscardTasks || policy == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution)

@@ -48,6 +48,7 @@ namespace Microsoft.Ccr.Core
 			thread = dispatcher.maxThreadStackSize == 0 ? new Thread (this.Run) : new Thread (this.Run, dispatcher.maxThreadStackSize);
 			thread.Name = String.Format ("{0} ThreadPoolThread ID: {1}", dispatcher.Name, this.currentQueue);
 			thread.Priority = dispatcher.priority;
+			thread.IsBackground = (dispatcher.options & DispatcherOptions.UseBackgroundThreads) != 0; 
 			if (dispatcher.state.HasValue)
 				thread.SetApartmentState (dispatcher.state.Value);
 			thread.Start ();
@@ -117,6 +118,7 @@ namespace Microsoft.Ccr.Core
 			this.maxThreadStackSize = maxThreadStackSize;
 		}
 
+		[MonoTODO ("Support UseProcessorAffinity")]
 		public Dispatcher (int threadCount, ThreadPriority priority, DispatcherOptions options, string threadPoolName)
 		{
 			maxThreads = threadCount;
