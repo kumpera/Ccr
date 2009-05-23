@@ -45,9 +45,11 @@ namespace Microsoft.Ccr.Core
 
 		internal void Start ()
 		{
-			thread = new Thread (this.Run);
+			thread = dispatcher.maxThreadStackSize == 0 ? new Thread (this.Run) : new Thread (this.Run, dispatcher.maxThreadStackSize);
 			thread.Name = String.Format ("{0} ThreadPoolThread ID: {1}", dispatcher.Name, this.currentQueue);
 			thread.Priority = dispatcher.priority;
+			if (dispatcher.state.HasValue)
+				thread.SetApartmentState (dispatcher.state.Value);
 			thread.Start ();
 		}
 
@@ -85,14 +87,34 @@ namespace Microsoft.Ccr.Core
 		int maxThreads = 10;
 		internal readonly ThreadPriority priority;
 		internal readonly DispatcherOptions options;
+		internal readonly ApartmentState? state;
+		internal int maxThreadStackSize = 0;
 
 		public Dispatcher ()
 		{
 			Name = "unnamed";
 		}
 
-		public Dispatcher (int threadCount, string threadPoolName) : this (threadCount, ThreadPriority.Normal, DispatcherOptions.None, threadPoolName)
+		public Dispatcher (int threadCount, string threadPoolName) 
+			: this (threadCount, ThreadPriority.Normal, DispatcherOptions.None, threadPoolName)
 		{
+		}
+
+		public Dispatcher (int threadCount, ThreadPriority priority, bool useBackgroundThreads, string threadPoolName)
+			: this (threadCount, priority, useBackgroundThreads ? DispatcherOptions.UseBackgroundThreads : DispatcherOptions.None, threadPoolName)
+		{
+		}
+
+		public Dispatcher (	int threadCount, ThreadPriority priority, DispatcherOptions options, ApartmentState threadApartmentState, string threadPoolName)
+			: this (threadCount, priority, options, threadPoolName)
+		{
+			this.state = threadApartmentState;
+		}
+
+		public Dispatcher (int threadCount, ThreadPriority priority, DispatcherOptions options, ApartmentState threadApartmentState, int maxThreadStackSize, string threadPoolName)
+			: this (threadCount, priority, options, threadApartmentState, threadPoolName)
+		{
+			this.maxThreadStackSize = maxThreadStackSize;
 		}
 
 		public Dispatcher (int threadCount, ThreadPriority priority, DispatcherOptions options, string threadPoolName)
@@ -101,9 +123,8 @@ namespace Microsoft.Ccr.Core
 			this.priority = priority;
 			this.options = options;
 			Name = threadPoolName;
-			
 		}
-		
+
 		internal void TaskDone (ITask task, Exception e)
 		{
 			Interlocked.Increment (ref processedTasks);
