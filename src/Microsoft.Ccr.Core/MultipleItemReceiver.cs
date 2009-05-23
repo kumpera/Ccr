@@ -103,7 +103,7 @@ namespace Microsoft.Ccr.Core {
 			return base.Execute ();
 		}
 
-		public override ITask PartialClone ()
+		public ITask PartialClone ()
 		{
 			return new MultipleItemReceiver (userTask, ports);
 		}

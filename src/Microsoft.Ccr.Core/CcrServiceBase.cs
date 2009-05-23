@@ -33,6 +33,58 @@ namespace Microsoft.Ccr.Core {
 
 	public class CcrServiceBase
 	{
+		protected CcrServiceBase () { }
+
+		protected CcrServiceBase (DispatcherQueue dispatcherQueue)
+		{
+			TaskQueue = dispatcherQueue;
+		}
+
+		protected DispatcherQueue TaskQueue { get; set; }
+
+		protected void Spawn (Handler handler)
+		{
+			TaskQueue.Enqueue (Arbiter.FromHandler (handler));
+		}
+
+		protected void Spawn<T0> (T0 t0, Handler<T0> handler)
+		{
+			TaskQueue.Enqueue (new Task<T0> (t0, handler));
+		}
+
+		protected void Spawn<T0, T1> (T0 t0, T1 t1, Handler<T0, T1> handler)
+		{
+			TaskQueue.Enqueue (new Task<T0, T1> (t0, t1, handler));
+		}
+
+		protected void Spawn<T0, T1, T2> (T0 t0, T1 t1, T2 t2, Handler<T0, T1, T2> handler)
+		{
+			TaskQueue.Enqueue (new Task<T0, T1, T2> (t0, t1, t2, handler));
+		}
+
+		protected void SpawnIterator (IteratorHandler handler)
+		{
+			TaskQueue.Enqueue (new IterativeTask (handler));
+		}
+
+		protected void SpawnIterator<T0> (T0 t0, IteratorHandler<T0> handler)
+		{
+			TaskQueue.Enqueue (new IterativeTask<T0> (t0, handler));
+		}
+
+		protected void SpawnIterator<T0, T1> (T0 t0, T1 t1, IteratorHandler<T0, T1> handler)
+		{
+			TaskQueue.Enqueue (new IterativeTask<T0, T1> (t0, t1, handler));
+		}
+
+		protected void SpawnIterator<T0, T1, T2> (T0 t0, T1 t1, T2 t2, IteratorHandler<T0, T1, T2> handler)
+		{
+			TaskQueue.Enqueue (new IterativeTask<T0, T1, T2> (t0, t1, t2, handler));
+		}
+
+
+		public static void EmptyHandler<T> (T message) {}
+
 	}
 
 }
