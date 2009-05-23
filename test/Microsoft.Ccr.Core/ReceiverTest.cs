@@ -34,10 +34,7 @@ using NUnit.Framework;
 namespace Microsoft.Ccr.Core {
 	/*
 	TODO test the following things:
-		Evaluate/Consume
-			LinkedInterator
-			ArbiterCleanupHandler
-			
+		ArbiterCleanupHandler
 	*/
 	[TestFixture]
 	public class ReceiverTest

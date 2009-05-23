@@ -87,6 +87,7 @@ namespace Microsoft.Ccr.Core
 		volatile bool isDisposed;
 		double currentRate;
 		Stopwatch watch;
+		volatile int waitingProducers;
 
 		internal object DispatcherObject { get; set; }
 
@@ -215,7 +216,6 @@ namespace Microsoft.Ccr.Core
 			}
 		}
 
-		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual bool Enqueue (ITask task)
 		{
 			if (isDisposed)
@@ -239,8 +239,11 @@ namespace Microsoft.Ccr.Core
 						}
 						break;
 					case TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution:
-						while (!isDisposed && queue.Count >= MaximumQueueDepth)
+						while (!isDisposed && queue.Count >= MaximumQueueDepth) {
+							++waitingProducers;
 							Monitor.Wait (_lock);
+							--waitingProducers;
+						}
 						if (isDisposed)
 							throw new ObjectDisposedException (ToString ());
 						break;
@@ -250,6 +253,17 @@ namespace Microsoft.Ccr.Core
 							queue.RemoveFirst ();
 							res = false;
 						}
+						break;
+					case TaskExecutionPolicy.ConstrainSchedulingRateThrottleExecution:
+						UpdateSchedulingRate ();
+						while (!isDisposed && CurrentSchedulingRate > MaximumSchedulingRate) {
+							++waitingProducers;
+							Monitor.Wait (_lock);
+							--waitingProducers;
+							UpdateSchedulingRate ();
+						}
+						if (isDisposed)
+							throw new ObjectDisposedException (ToString ());
 						break;
 					}
 
@@ -262,7 +276,6 @@ namespace Microsoft.Ccr.Core
 			}
 		}
 
-		[MonoTODO ("doesn't work constrained policies")]
 		public virtual bool TryDequeue (out ITask task)
 		{
 			if (isDisposed)
@@ -277,18 +290,14 @@ namespace Microsoft.Ccr.Core
 					return false;
 				}
 				task = queue.First.Value;
-				var p = Policy;
-				if (p == TaskExecutionPolicy.ConstrainQueueDepthThrottleExecution) {
-					if (queue.Count >= MaximumQueueDepth)
-						Monitor.Pulse (_lock);
-				}
 				queue.RemoveFirst ();
+				if (waitingProducers > 0)
+					Monitor.Pulse (_lock);
 				return true;
 			}
 		}
 
 
-		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual void Suspend ()
 		{
 			lock (_lock) {
@@ -296,13 +305,14 @@ namespace Microsoft.Ccr.Core
 			}
 		}
 
-		[MonoTODO ("doesn't work with constrained policies")]
 		public virtual void Resume ()
 		{
 			bool orig;
 			lock (_lock) {
 				orig = suspended;
 				suspended = false;
+				if (waitingProducers > 0)
+					Monitor.Pulse (_lock);
 			}
 			if (orig && dispatcher != null)
 				dispatcher.Notify (this);
