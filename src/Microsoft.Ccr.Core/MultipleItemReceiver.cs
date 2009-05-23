@@ -103,6 +103,7 @@ namespace Microsoft.Ccr.Core {
 			return base.Execute ();
 		}
 
+		//LAMEIMPL, MS forgot to add override here.
 		public ITask PartialClone ()
 		{
 			return new MultipleItemReceiver (userTask, ports);
