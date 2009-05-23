@@ -82,6 +82,12 @@ namespace Microsoft.Ccr.Core {
 			TaskQueue.Enqueue (new IterativeTask<T0, T1, T2> (t0, t1, t2, handler));
 		}
 
+		public void Activate<T> (params T[] tasks) where T : ITask
+		{
+			foreach (var t in tasks)
+				TaskQueue.Enqueue (t);
+		}
+
 
 		public static void EmptyHandler<T> (T message) {}
 
