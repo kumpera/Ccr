@@ -65,5 +65,12 @@ namespace Microsoft.Ccr.Core {
 				Arbiter.Receive (false, portSet.P1, handler1),
 				Arbiter.Receive (false, portSet.P2, handler2));
 		}
+
+		public static MultipleItemGather MultipleItemReceive<T0, T1> (PortSet<T0, T1> portSet, int totalItemCount, Handler<ICollection<T0>, ICollection<T1>> handler)
+		{
+			return Arbiter.MultipleItemReceive (portSet, totalItemCount, handler);
+		}
+
+
 	}
 }
