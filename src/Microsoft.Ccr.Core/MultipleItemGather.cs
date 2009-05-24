@@ -122,9 +122,13 @@ namespace Microsoft.Ccr.Core {
 
 		}
 
-		[MonoTODO]
 		public override void Cleanup (ITask taskToCleanup)
 		{
+			ICollection[] data = (ICollection[])taskToCleanup [0].Item;
+			for (int i = 0; i < ports.Length; ++i) {
+				foreach (var o in data [i])
+					(ports [i] as IPort).PostUnknownType (o);
+			}
 		}
 
 		public override void Cleanup ()

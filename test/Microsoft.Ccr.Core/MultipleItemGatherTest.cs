@@ -565,5 +565,39 @@ namespace Microsoft.Ccr.Core {
 			Assert.AreEqual (ReceiverTaskState.Persistent, rec2.State, "#5");
 			Assert.AreEqual (0, dq.count, "#6");
 		}
+
+		[Test]
+		public void CleanupTask ()
+		{
+			Port<int> pa = new Port<int> ();
+			Port<string> pb = new Port<string> ();
+
+			Type[] types = new Type[] { typeof (int), typeof (string) };
+			IPortReceive[] ports = new IPortReceive[] { pa, pb };
+			int count = 2;
+			Handler<ICollection[]> handler = (cols) => { }; 
+			var mig = new MultipleItemGather (types, ports, count, handler);
+			var dq = new SerialDispatchQueue ();
+			mig.TaskQueue = dq;
+
+			mig.Execute ();
+
+			ITask task = null;
+			var rec = ports [0].GetReceivers () [0];
+			Assert.IsTrue (rec.Evaluate (new PortElement<int> (10), ref task), "#1");
+			Assert.IsNull (task, "#2");
+			Assert.IsTrue (rec.Evaluate (new PortElement<int> (20), ref task), "#3");
+			Assert.IsNotNull (task, "#4");
+
+			mig.Cleanup (task);
+
+			Assert.AreEqual (2, pa.ItemCount, "#4");
+			Assert.AreEqual (0, pb.ItemCount, "#5");
+
+			Assert.AreEqual (10, pa.Test (), "#6");
+			Assert.AreEqual (20, pa.Test (), "#7");
+
+
+		}
 	}
 }
