@@ -269,7 +269,9 @@ namespace Microsoft.Ccr.Core
 		{	get { return options; }
 			set { } //FIXME what on earth a setter here could do?
 		}
-		
+
+		public static int ThreadsPerCpu { get; set; }
+
 		public Port<Exception> UnhandledExceptionPort { get; set; }
 
 		public event UnhandledExceptionEventHandler UnhandledException;
