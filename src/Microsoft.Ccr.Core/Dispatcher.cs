@@ -118,7 +118,7 @@ namespace Microsoft.Ccr.Core
 			this.maxThreadStackSize = maxThreadStackSize;
 		}
 
-		[MonoTODO ("Support UseProcessorAffinity")]
+		[MonoTODO ("Support UseProcessorAffinity and default maxThread should be based on ThreadsPerCpu")]
 		public Dispatcher (int threadCount, ThreadPriority priority, DispatcherOptions options, string threadPoolName)
 		{
 			maxThreads = threadCount;
